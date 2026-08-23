@@ -411,13 +411,7 @@
         }
         
         .is-moving {
-            opacity: 0.8 !important;
-            outline: 2px dashed var(--color-primary) !important;
-            outline-offset: -2px !important;
-            background-color: #e2e8f0 !important;
-            transform: scale(0.98);
-            transition: transform 0.1s;
-            z-index: 100;
+            opacity: 0 !important;
         }
         .is-moving td, .is-moving .editable {
             background-color: transparent !important;
@@ -1172,7 +1166,6 @@
             document.body.appendChild(ghostEl);
 
             el.classList.add('is-moving');
-            el.style.opacity = '0.3';
         }
 
         document.addEventListener('touchstart', function(e) {
@@ -2089,13 +2082,13 @@
                 dOffY = e.clientY - dragSrcEl.getBoundingClientRect().top;
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', e.target.innerHTML);
-                e.target.classList.add('is-moving');
+                setTimeout(() => e.target.classList.add('is-moving'), 0);
             } else if (e.target.classList.contains('layout-cell') && (e.target.closest('#project-section') || e.target.closest('#production-section') || e.target.closest('#locations-section') || e.target.closest('#crew-section') || e.target.closest('#transport-section'))) {
                 dragColEl = e.target;
                 dOffX = e.clientX - dragColEl.getBoundingClientRect().left;
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', e.target.innerHTML);
-                e.target.classList.add('is-moving');
+                setTimeout(() => e.target.classList.add('is-moving'), 0);
             }
         });
 
