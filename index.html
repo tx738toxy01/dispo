@@ -2833,12 +2833,13 @@ function exportPDF() {
 
                         const rowCells = [];
                         for(let c=0; c<6; c++) {
-                            let hexBg = getHexFromRgb(row[c].bg);
+                            let cell = row[c] || { text: '', bg: '' };
+                            let hexBg = getHexFromRgb(cell.bg);
                             let isDark = hexBg && hexBg.toUpperCase() !== '#F9E79F' && hexBg.toUpperCase() !== '#FFFFFF';
                             let cellBg = hexBg || (isLunch ? '#F9E79F' : null);
                             let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
                             let alignH = (c === 1) ? 'center' : 'left';
-                            rowCells.push({ text: row[c].text, alignment: alignH, margin: [1, 2, 1, 2], fillColor: cellBg, color: fontColor, bold: isLunch || isDark, noWrap: c === 0 });
+                            rowCells.push({ text: cell.text, alignment: alignH, margin: [1, 2, 1, 2], fillColor: cellBg, color: fontColor, bold: isLunch || isDark, noWrap: c === 0 });
                         }
                         sceneBody.push(rowCells);
                     });
@@ -2864,10 +2865,11 @@ function exportPDF() {
                     casts.forEach(row => {
                         const rowCells = [];
                         for(let c=0; c<4; c++) {
-                            let hexBg = getHexFromRgb(row[c].bg);
+                            let cell = row[c] || { text: '', bg: '' };
+                            let hexBg = getHexFromRgb(cell.bg);
                             let isDark = hexBg && hexBg.toUpperCase() !== '#FFFFFF';
                             let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
-                            rowCells.push({ text: row[c].text, alignment: c === 0 ? 'left' : 'center', margin: [1, 2, 1, 2], fillColor: hexBg || null, color: fontColor, bold: isDark });
+                            rowCells.push({ text: cell.text, alignment: c === 0 ? 'left' : 'center', margin: [1, 2, 1, 2], fillColor: hexBg || null, color: fontColor, bold: isDark });
                         }
                         castBody.push(rowCells);
                     });
