@@ -353,15 +353,16 @@
         }
 
         .td-delete {
-            left: -22px;
-            right: auto;
+            left: auto;
+            right: -22px;
             top: 50%;
             transform: translateY(-50%);
         }
 
         .drag-handle {
             position: absolute;
-            right: -22px;
+            left: -22px;
+            right: auto;
             top: 50%;
             transform: translateY(-50%);
             cursor: grab;
@@ -966,20 +967,20 @@
                 </thead>
                 <tbody id="morning-tbody">
                     <tr draggable="true">
-                        <td><button class="delete-btn td-delete">&times;</button><div class="editable" data-type="time-range">09:00 - 09:40</div></td>
+                        <td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable" data-type="time-range">09:00 - 09:40</div></td>
                         <td><div class="editable">7</div></td>
                         <td><div class="editable">EXT. Step</div></td>
                         <td><div class="editable">Putujú, majú hlad</div></td>
                         <td><div class="editable">Gvendolína, Koloman</div></td>
-                        <td><div class="editable">Drevené podložky, koža</div><span class="drag-handle" title="Presunúť riadok">☰</span></td>
+                        <td><div class="editable">Drevené podložky, koža</div><button class="delete-btn td-delete">&times;</button></td>
                     </tr>
                     <tr draggable="true">
-                        <td><button class="delete-btn td-delete">&times;</button><div class="editable" data-type="time-range">09:40 - 10:20</div></td>
+                        <td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable" data-type="time-range">09:40 - 10:20</div></td>
                         <td><div class="editable">8</div></td>
                         <td><div class="editable">EXT. Step</div></td>
                         <td><div class="editable">Predstavenie Jakuba</div></td>
                         <td><div class="editable">Jakub</div></td>
-                        <td><div class="editable">Kostené podložky (hlina nie)</div><span class="drag-handle" title="Presunúť riadok">☰</span></td>
+                        <td><div class="editable">Kostené podložky (hlina nie)</div><button class="delete-btn td-delete">&times;</button></td>
                     </tr>
                 </tbody>
                 <tbody class="ignore-export">
@@ -998,12 +999,12 @@
                 </tbody>
                 <tbody id="afternoon-tbody">
                     <tr draggable="true">
-                        <td><button class="delete-btn td-delete">&times;</button><div class="editable" data-type="time-range">13:30 - 14:20</div></td>
+                        <td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable" data-type="time-range">13:30 - 14:20</div></td>
                         <td><div class="editable">18</div></td>
                         <td><div class="editable">EXT. Step</div></td>
                         <td><div class="editable">Tlupa loví zajaca</div></td>
                         <td><div class="editable">Koloman, tlupa</div></td>
-                        <td><div class="editable">Zajac, oštepy 5x</div><span class="drag-handle" title="Presunúť riadok">☰</span></td>
+                        <td><div class="editable">Zajac, oštepy 5x</div><button class="delete-btn td-delete">&times;</button></td>
                     </tr>
                 </tbody>
                 <tbody class="ignore-export">
@@ -1028,16 +1029,16 @@
                 </thead>
                 <tbody id="cast-tbody">
                     <tr draggable="true">
-                        <td><button class="delete-btn td-delete">&times;</button><div class="editable">Gvendolína / Hilda Premúdra</div></td>
+                        <td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable">Gvendolína / Hilda Premúdra</div></td>
                         <td><div class="editable" data-type="time-loc">06:30 (STV)</div></td>
                         <td><div class="editable" data-type="time-range">06:30 - 08:00</div></td>
-                        <td><div class="editable" data-type="time">09:00</div><span class="drag-handle" title="Presunúť riadok">☰</span></td>
+                        <td><div class="editable" data-type="time">09:00</div><button class="delete-btn td-delete">&times;</button></td>
                     </tr>
                     <tr draggable="true">
-                        <td><button class="delete-btn td-delete">&times;</button><div class="editable">Koloman / Medard Odolný</div></td>
+                        <td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable">Koloman / Medard Odolný</div></td>
                         <td><div class="editable" data-type="time-loc">06:30 (STV)</div></td>
                         <td><div class="editable" data-type="time-range">00:00 - 00:00</div></td>
-                        <td><div class="editable" data-type="time">09:00</div><span class="drag-handle" title="Presunúť riadok">☰</span></td>
+                        <td><div class="editable" data-type="time">09:00</div><button class="delete-btn td-delete">&times;</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -2033,9 +2034,10 @@
                     if (colCount === 4) {
                         if (i === 1) cellContent = `<div class="editable example-text" data-type="time-loc">00:00 (Miesto)</div>`;
                         else if (i === 2) cellContent = `<div class="editable example-text" data-type="time-range">00:00 - 00:00</div>`;
-                        else if (i === 3) cellContent = `<div class="editable example-text" data-type="time">00:00</div><span class="drag-handle" title="Presunúť riadok">☰</span>`;
+                        else if (i === 3) cellContent = `<div class="editable example-text" data-type="time">00:00</div>`;
                     }
-                    if (i === 0) { rowHtml += `<td><button class="delete-btn td-delete">&times;</button>${cellContent}</td>`; } 
+                    if (i === 0) { rowHtml += `<td><span class="drag-handle" title="Presunúť riadok">☰</span>${cellContent}</td>`; } 
+                    else if (i === colCount - 1) { rowHtml += `<td>${cellContent}<button class="delete-btn td-delete">&times;</button></td>`; }
                     else { rowHtml += `<td>${cellContent}</td>`; }
                 }
                 newRow.innerHTML = rowHtml; tbody.appendChild(newRow); saveData();
@@ -2047,12 +2049,12 @@
                 const tbody = document.getElementById(targetId);
                 const newRow = document.createElement('tr');
                 newRow.setAttribute('draggable', 'true');
-                let rowHtml = `<td><button class="delete-btn td-delete">&times;</button><div class="editable example-text" data-type="time-range">00:00 - 00:00</div></td>`;
+                let rowHtml = `<td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable example-text" data-type="time-range">00:00 - 00:00</div></td>`;
                 rowHtml += `<td><div class="editable example-text"></div></td>`;
                 rowHtml += `<td><div class="editable example-text"></div></td>`;
                 rowHtml += `<td><div class="editable example-text"></div></td>`;
                 rowHtml += `<td><div class="editable example-text"></div></td>`;
-                rowHtml += `<td><div class="editable example-text"></div><span class="drag-handle" title="Presunúť riadok">☰</span></td>`;
+                rowHtml += `<td><div class="editable example-text"></div><button class="delete-btn td-delete">&times;</button></td>`;
                 newRow.innerHTML = rowHtml;
                 tbody.appendChild(newRow);
                 saveData();
@@ -3052,10 +3054,10 @@ function syncCastTableWithScenes() {
 
                         newRow.setAttribute('draggable', 'true');
                         newRow.innerHTML = `
-                            <td><button class="delete-btn td-delete">&times;</button><div class="editable">${charName}</div></td>
+                            <td><span class="drag-handle" title="Presunúť riadok">☰</span><div class="editable">${charName}</div></td>
                             <td><div class="editable ${pUpClass}" data-type="time-loc">${pUp}</div></td>
                             <td><div class="editable ${costClass}" data-type="time-range">${cost}</div></td>
-                            <td><div class="editable ${onsetClass}" data-type="time">${onset}</div><span class="drag-handle" title="Presunúť riadok">☰</span></td>
+                            <td><div class="editable ${onsetClass}" data-type="time">${onset}</div><button class="delete-btn td-delete">&times;</button></td>
                         `;
                         castTbody.appendChild(newRow);
                     });
