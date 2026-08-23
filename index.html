@@ -277,11 +277,11 @@
         }
 
         table.data-table tbody tr:nth-child(even) td {
-            background-color: var(--color-bg-light);
+            background-color: #f1f5f9 !important;
         }
         
         table.data-table tbody tr:nth-child(odd) td {
-            background-color: #ffffff;
+            background-color: #ffffff !important;
         }
 
         table.data-table td .editable {
@@ -380,17 +380,22 @@
             top: -4px;
             right: 24px;
             background-color: #95a5a6;
-            color: white;
+            color: transparent;
             border-radius: 50%;
             width: 16px;
             height: 16px;
-            font-size: 10px;
+            font-size: 0;
             font-weight: bold;
             cursor: grab;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10;
+        }
+        .drag-col-handle::after {
+            content: "☰";
+            color: white;
+            font-size: 10px;
         }
         
         .drag-col-handle:hover {
@@ -566,12 +571,171 @@
                 --table-pad: 8px;
                 --input-min-height: 24px;
             }
+            .top-panels-wrapper {
+                flex-direction: column !important;
+            }
+            .top-panels-wrapper > div {
+                margin-bottom: 20px !important;
+                width: 100% !important;
+            }
             .btn-action {
                 font-size: 10px;
                 padding: 8px 2px;
             }
             .custom-dropdown-menu { font-size: 10px; }
             .custom-dropdown-menu div { padding: 12px 4px; }
+
+            table.layout-table, table.layout-table tbody, table.layout-table tr {
+                display: block;
+                width: 100%;
+            }
+            table.layout-table tr {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            table.layout-table td.layout-cell {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 0;
+            }
+            table.layout-table td.layout-cell {
+                padding-top: 4px !important;
+                margin-bottom: 6px !important;
+            }
+            table.layout-table td.layout-cell .editable-label {
+                padding-right: 60px !important;
+            }
+            table.layout-table td.layout-cell .delete-btn {
+                top: -2px !important;
+                right: 0 !important;
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 12px !important;
+            }
+            .drag-col-handle {
+                top: -2px !important;
+                right: 28px !important;
+                width: 22px !important;
+                height: 22px !important;
+            }
+            .drag-col-handle::after {
+                font-size: 12px !important;
+            }
+
+            table.data-table, table.data-table tbody {
+                display: block;
+                width: 100%;
+            }
+            table.data-table thead {
+                display: none; 
+            }
+            table.data-table tr {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 15px;
+                border: 1px solid var(--color-border);
+                border-radius: 8px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+                position: relative;
+                overflow: visible;
+            }
+            table.data-table tbody tr:nth-child(even) {
+                background-color: #f1f5f9 !important;
+            }
+            table.data-table tbody tr:nth-child(odd) {
+                background-color: #ffffff !important;
+            }
+            table.data-table tbody.ignore-export tr {
+                border: none;
+                box-shadow: none;
+                background-color: transparent !important;
+                margin-bottom: 0;
+            }
+            table.data-table td {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                box-sizing: border-box;
+                border: none !important;
+                border-bottom: 1px solid #edf2f7 !important;
+                padding: 6px 12px;
+                height: auto !important;
+                position: static !important;
+            }
+            table.data-table td:last-child {
+                border-bottom: none !important;
+            }
+            table.data-table td .editable {
+                height: auto !important;
+                min-height: 0 !important;
+                padding: 0 !important;
+                margin-top: 2px;
+            }
+
+            table.scenes-table tbody:not(.ignore-export) tr:not(.lunch-row) td:nth-child(1)::before { content: "ČAS"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.scenes-table tbody:not(.ignore-export) tr:not(.lunch-row) td:nth-child(2)::before { content: "OBRAZ"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.scenes-table tbody:not(.ignore-export) tr:not(.lunch-row) td:nth-child(3)::before { content: "LOKÁCIA"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.scenes-table tbody:not(.ignore-export) tr:not(.lunch-row) td:nth-child(4)::before { content: "POPIS AKCIE"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.scenes-table tbody:not(.ignore-export) tr:not(.lunch-row) td:nth-child(5)::before { content: "ÚČINKUJÚCI"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.scenes-table tbody:not(.ignore-export) tr:not(.lunch-row) td:nth-child(6)::before { content: "REKVIZITY / POZNÁMKY"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+
+            table.cast-table tbody tr td:nth-child(1)::before { content: "ÚČINKUJÚCI"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.cast-table tbody tr td:nth-child(2)::before { content: "ODCHOD (PICK UP)"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.cast-table tbody tr td:nth-child(3)::before { content: "KOSTÝMY / MASKY"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+            table.cast-table tbody tr td:nth-child(4)::before { content: "NA PĽACI (ON SET)"; font-size: 11px; color: #7f8c8d; font-weight: bold; margin-bottom: 4px; }
+
+            table.scenes-table th:nth-child(2), table.scenes-table td:nth-child(2) {
+                text-align: left !important;
+                white-space: normal !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            table.data-table tbody.ignore-export td {
+                padding-bottom: 25px !important;
+                padding-top: 5px !important;
+            }
+            .add-scene-btn {
+                margin-bottom: 20px !important;
+            }
+
+            .td-delete {
+                left: auto;
+                right: 8px;
+                top: 8px;
+                transform: none;
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            .drag-handle {
+                position: absolute !important;
+                right: -24px !important;
+                top: 50% !important;
+                bottom: auto !important;
+                transform: translateY(-50%) !important;
+                font-size: 20px !important;
+            }
+
+            #detective-ui-container {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                text-align: center;
+            }
+            #script-filename-display {
+                margin-left: 0 !important;
+                margin-top: 6px !important;
+            }
+
+            #header-section > div:nth-child(2) {
+                flex-direction: column !important;
+                gap: 5px !important;
+            }
+            #header-section > div:nth-child(2) h1 {
+                line-height: 1.1;
+            }
         }
 
         @media print {
@@ -618,6 +782,31 @@
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
         }
+
+        .top-panels-wrapper {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            align-items: stretch;
+        }
+        .top-panels-wrapper > div {
+            flex: 1 1 0;
+            min-width: 0;
+            margin-bottom: 0 !important;
+        }
+        .top-panels-wrapper table.layout-table tr {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .top-panels-wrapper table.layout-table td.layout-cell {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0;
+            padding-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -657,8 +846,8 @@
                 <table class="layout-table">
                     <tbody>
                         <tr>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Názov projektu</div><div class="editable">Názov</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Filmovací deň č.</div><div class="editable">1</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Názov projektu</div><div class="editable">Názov</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Filmovací deň č.</div><div class="editable">1</div></td>
                         </tr>
                     </tbody>
                 </table>
@@ -666,50 +855,49 @@
             </div>
         </div>
 
-        <div id="management-section" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; margin-bottom: 25px; border: 1px solid #e2e8f0;">
-            <div style="position: absolute; top: -1px; left: -1px; background-color: #475569; color: white; padding: 4px 10px; font-size: 10px; font-weight: bold; border-top-left-radius: 8px; border-bottom-right-radius: 8px; letter-spacing: 1px;">VEDENIE PROJEKTU</div>
-            
-            <div class="section-container" id="production-section" style="margin-bottom: 0;">
+        <div class="top-panels-wrapper">
+            <div id="management-section" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; border: 1px solid #e2e8f0;">
+                <div style="position: absolute; top: -1px; left: -1px; background-color: #475569; color: white; padding: 4px 10px; font-size: 10px; font-weight: bold; border-top-left-radius: 8px; border-bottom-right-radius: 8px; letter-spacing: 1px;">VEDENIE PROJEKTU</div>
+                <div class="section-container" id="production-section" style="margin-bottom: 0;">
+                    <table class="layout-table">
+                        <tbody>
+                            <tr>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Režisér</div><div class="editable">Meno Priezvisko</div></td>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Kamera</div><div class="editable">Meno Priezvisko</div></td>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Produkcia</div><div class="editable">Meno Priezvisko / Kontakt</div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="add-btn" data-type="production">+ PRIDAŤ KOLONKU</button>
+                </div>
+            </div>
+
+            <div id="weather-box" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; border: 1px solid #e2e8f0;">
+                <div style="position: absolute; top: -1px; left: -1px; background-color: #475569; color: white; padding: 4px 10px; font-size: 10px; font-weight: bold; border-top-left-radius: 8px; border-bottom-right-radius: 8px; letter-spacing: 1px;">PREDPOVEĎ POČASIA</div>
                 <table class="layout-table">
                     <tbody>
                         <tr>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Režisér</div><div class="editable">Meno Priezvisko</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Kamera</div><div class="editable">Meno Priezvisko</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Produkcia</div><div class="editable">Meno Priezvisko / Kontakt</div></td>
+                            <td class="layout-cell"><button class="delete-btn">&times;</button><div class="editable-label" id="weather-label">Počasie pre...</div><div class="editable" id="weather-field"><span style="color: #94a3b8;">(automaticky podľa mesta lokácie. Ak nemáš internet, pridaj ručne)</span></div></td>
                         </tr>
                     </tbody>
                 </table>
-                <button class="add-btn" data-type="production">+ PRIDAŤ KOLONKU</button>
             </div>
-        </div>
 
-        <div id="locations-section" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; margin-bottom: 25px; border: 1px solid #e2e8f0;">
-            <div style="position: absolute; top: -1px; left: -1px; background-color: #475569; color: white; padding: 4px 10px; font-size: 10px; font-weight: bold; border-top-left-radius: 8px; border-bottom-right-radius: 8px; letter-spacing: 1px;">LOKÁCIE</div>
-            
-            <div class="section-container" style="margin-bottom: 0;">
-                <table class="layout-table">
-                    <tbody>
-                        <tr>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Hlavná Lokácia (Adresa)</div><div class="editable" id="location-field" data-type="location">Ulica, Mesto...</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Zázemie (Basecamp)</div><div class="editable">Kultúrny dom...</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Parkovanie</div><div class="editable">Detaily o parkovaní pre štáb</div></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button class="add-btn" data-type="locations">+ PRIDAŤ KOLONKU</button>
+            <div id="locations-section" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; border: 1px solid #e2e8f0;">
+                <div style="position: absolute; top: -1px; left: -1px; background-color: #475569; color: white; padding: 4px 10px; font-size: 10px; font-weight: bold; border-top-left-radius: 8px; border-bottom-right-radius: 8px; letter-spacing: 1px;">LOKÁCIE</div>
+                <div class="section-container" style="margin-bottom: 0;">
+                    <table class="layout-table">
+                        <tbody>
+                            <tr>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Hlavná Lokácia (Adresa)</div><div class="editable" id="location-field" data-type="location">Ulica, Mesto...</div></td>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Zázemie (Basecamp)</div><div class="editable">Kultúrny dom...</div></td>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Parkovanie</div><div class="editable">Detaily o parkovaní pre štáb</div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="add-btn" data-type="locations">+ PRIDAŤ KOLONKU</button>
+                </div>
             </div>
-        </div>
-
-        <div id="weather-box" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; margin-bottom: 10px; border: 1px solid #e2e8f0;">
-            <div style="position: absolute; top: -1px; left: -1px; background-color: #475569; color: white; padding: 4px 10px; font-size: 10px; font-weight: bold; border-top-left-radius: 8px; border-bottom-right-radius: 8px; letter-spacing: 1px;">PREDPOVEĎ POČASIA</div>
-            
-            <table class="layout-table">
-                <tbody>
-                    <tr>
-                        <td class="layout-cell"><button class="delete-btn">&times;</button><div class="editable-label" id="weather-label">Počasie pre...</div><div class="editable" id="weather-field"><span style="color: #94a3b8;">(automaticky podľa mesta lokácie. Ak nemáš internet, pridaj ručne)</span></div></td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
 
         <div id="notices-section-wrapper" style="background-color: #f1f5f9; padding: 30px 15px 15px 15px; border-radius: 8px; position: relative; margin-bottom: 25px; border: 1px solid #e2e8f0;">
@@ -737,9 +925,9 @@
                 <table class="layout-table">
                     <tbody>
                         <tr>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Réžia / Kamera</div><div class="editable" data-type="time">08:00</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Kostýmy / Masky</div><div class="editable" data-type="time">06:30</div></td>
-                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">↔</span><button class="delete-btn">&times;</button><div class="editable-label">Rekvizity</div><div class="editable" data-type="time">08:00</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Réžia / Kamera</div><div class="editable" data-type="time">08:00</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Kostýmy / Masky</div><div class="editable" data-type="time">06:30</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Rekvizity</div><div class="editable" data-type="time">08:00</div></td>
                         </tr>
                     </tbody>
                 </table>
@@ -754,12 +942,12 @@
                 <table class="layout-table">
                     <tbody>
                         <tr>
-                            <td class="layout-cell"><button class="delete-btn">&times;</button><div class="editable-label">Odchod Štáb</div><div class="editable" data-type="time-loc">07:15 (Stará vratnica)</div></td>
-                            <td class="layout-cell"><button class="delete-btn">&times;</button><div class="editable-label">Nástup na pľaci</div><div class="editable" data-type="time-loc">08:00 (Kameňolom)</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Odchod Štáb</div><div class="editable" data-type="time-loc">07:15 (Stará vratnica)</div></td>
+                            <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Nástup na pľaci</div><div class="editable" data-type="time-loc">08:00 (Kameňolom)</div></td>
                         </tr>
                     </tbody>
                 </table>
-                <button class="add-btn">+ PRIDAŤ TRANSPORT</button>
+                <button class="add-btn" data-type="transport">+ PRIDAŤ TRANSPORT</button>
             </div>
         </div>
 
@@ -809,11 +997,8 @@
                 <tbody id="lunch-tbody">
                     <tr class="lunch-row" style="background-color: #F9E79F !important;">
                         <td style="background-color: transparent !important;"><div class="editable" data-type="time-range" style="font-weight:bold; background-color: #F9E79F;">12:30 - 13:30</div></td>
-                        <td style="background-color: transparent !important;"><div class="editable" style="font-weight:bold; background-color: #F9E79F;">-</div></td>
-                        <td style="background-color: transparent !important;"><div class="editable" style="font-weight:bold; background-color: #F9E79F;">Zázemie</div></td>
-                        <td style="background-color: transparent !important;"><div class="editable" style="font-weight:bold; background-color: #F9E79F;">OBEDOVÁ PAUZA</div></td>
-                        <td style="background-color: transparent !important;"><div class="editable" style="font-weight:bold; background-color: #F9E79F;"></div></td>
-                        <td style="background-color: transparent !important;"><div class="editable" style="font-weight:bold; background-color: #F9E79F;">Kultúrny dom</div></td>
+                        <td colspan="3" style="background-color: transparent !important; text-align: center;"><div class="editable" style="font-weight:bold; background-color: #F9E79F; text-align: center;">OBEDOVÁ PAUZA</div></td>
+                        <td colspan="2" style="background-color: transparent !important; text-align: center;"><div class="editable" style="font-weight:bold; background-color: #F9E79F; text-align: center;">Kultúrny dom</div></td>
                     </tr>
                 </tbody>
                 <tbody id="afternoon-tbody">
@@ -1130,10 +1315,10 @@
                             if (isOverlapping(ghostRect, targetRect)) {
                                 let isBefore = (touchColEl.compareDocumentPosition(hoverTd) & Node.DOCUMENT_POSITION_FOLLOWING);
                                 
-                                if (isBefore && movingRight) {
+                                if (isBefore && (movingRight || movingDown)) {
                                     hoverTd.parentNode.insertBefore(touchColEl, hoverTd.nextSibling);
                                     break;
-                                } else if (!isBefore && movingLeft) {
+                                } else if (!isBefore && (movingLeft || movingUp)) {
                                     hoverTd.parentNode.insertBefore(touchColEl, hoverTd);
                                     break;
                                 }
@@ -1807,9 +1992,9 @@
                 const btnText = addBtn.innerText.toUpperCase();
                 let dragHandle = '';
                 
-                if (addBtn.dataset.type === 'project' || addBtn.dataset.type === 'production' || addBtn.dataset.type === 'locations' || addBtn.dataset.type === 'crew') {
+                if (addBtn.dataset.type === 'project' || addBtn.dataset.type === 'production' || addBtn.dataset.type === 'locations' || addBtn.dataset.type === 'crew' || addBtn.dataset.type === 'transport') {
                     newCol.setAttribute('draggable', 'true');
-                    dragHandle = `<span class="drag-col-handle" title="Presunúť">↔</span>`;
+                    dragHandle = `<span class="drag-col-handle" title="Presunúť">☰</span>`;
                 } else if (addBtn.dataset.type === 'notice') {
                     dragHandle = `<span class="drag-col-handle" style="display:none;"></span>`;
                 } else if (btnText.includes('ODDELENIE')) {
@@ -1904,7 +2089,7 @@
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', e.target.innerHTML);
                 e.target.classList.add('is-moving');
-            } else if (e.target.classList.contains('layout-cell') && (e.target.closest('#project-section') || e.target.closest('#production-section') || e.target.closest('#locations-section') || e.target.closest('#crew-section'))) {
+            } else if (e.target.classList.contains('layout-cell') && (e.target.closest('#project-section') || e.target.closest('#production-section') || e.target.closest('#locations-section') || e.target.closest('#crew-section') || e.target.closest('#transport-section'))) {
                 dragColEl = e.target;
                 dOffX = e.clientX - dragColEl.getBoundingClientRect().left;
                 e.dataTransfer.effectAllowed = 'move';
@@ -1985,31 +2170,28 @@
                 let movingLeft = e.clientX < window.lastDragX;
                 window.lastDragX = e.clientX;
 
+                if (typeof window.lastDragY === 'undefined') window.lastDragY = e.clientY;
+                let movingDown = e.clientY > window.lastDragY;
+                let movingUp = e.clientY < window.lastDragY;
+                window.lastDragY = e.clientY;
+
                 const tr = dragColEl.parentNode;
                 if (!tr) return;
                 const cells = Array.from(tr.children);
-                
-                let simLeft = e.clientX - dOffX;
-                let simRight = simLeft + dragColEl.getBoundingClientRect().width;
                 
                 for (let c of cells) {
                     if (c === dragColEl) continue;
                     const rect = c.getBoundingClientRect();
                     
-                    if (simLeft < rect.right && simRight > rect.left) {
+                    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
                         let isBefore = (dragColEl.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING);
-                        let thresholdX = rect.width * 0.4;
                         
-                        if (isBefore && movingRight) { 
-                            if (simRight > rect.left + thresholdX) {
-                                tr.insertBefore(dragColEl, c.nextSibling);
-                                break;
-                            }
-                        } else if (!isBefore && movingLeft) { 
-                            if (simLeft < rect.right - thresholdX) {
-                                tr.insertBefore(dragColEl, c);
-                                break;
-                            }
+                        if (isBefore && (movingRight || movingDown)) { 
+                            tr.insertBefore(dragColEl, c.nextSibling);
+                            break;
+                        } else if (!isBefore && (movingLeft || movingUp)) { 
+                            tr.insertBefore(dragColEl, c);
+                            break;
                         }
                     }
                 }
