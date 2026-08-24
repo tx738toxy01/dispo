@@ -1202,13 +1202,15 @@
         <div class="modal-content" style="cursor: default;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <div class="modal-title">Náhľad PDF</div>
-                <button class="btn-modal btn-cancel" onclick="closePreview()" style="padding: 6px 12px;">Zavrieť</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div id="modal-footer-actions" style="display: none; gap: 10px;">
+                        <button class="btn-modal btn-cancel" style="background-color: #64748b; color: white; padding: 6px 12px;" onclick="printPDF()">Tlačiť PDF</button>
+                        <button class="btn-modal btn-save" style="padding: 6px 12px;" onclick="exportPDF(); closePreview();">Stiahnuť PDF</button>
+                    </div>
+                    <button class="btn-modal btn-cancel" onclick="closePreview()" style="padding: 6px 12px;">Zavrieť</button>
+                </div>
             </div>
             <div id="preview-container" class="preview-container"></div>
-            <div id="modal-footer-actions" style="display: none; justify-content: flex-end; gap: 10px; margin-top: 15px;">
-                <button class="btn-modal btn-cancel" style="background-color: #64748b; color: white;" onclick="printPDF()">Tlačiť PDF</button>
-                <button class="btn-modal btn-save" onclick="exportPDF(); closePreview();">Stiahnuť PDF</button>
-            </div>
         </div>
     </div>
 
