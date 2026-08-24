@@ -857,9 +857,9 @@
             </div>
         </div>
 
-        <button id="preview-btn" class="btn-action btn-primary" onclick="previewPDF()">👁 NÁHĽAD</button>
+        <button id="preview-btn" class="btn-action btn-primary" onclick="previewPDF(false)">👁 NÁHĽAD</button>
                 
-        <button id="export-btn" class="btn-action btn-green" onclick="exportPDF()">⬇ EXPORT PDF</button>
+        <button id="export-btn" class="btn-action btn-green" onclick="previewPDF(true)">⬇ EXPORT PDF</button>
     </div>
 
     <div class="document-container" id="dynamic-content">
@@ -1163,12 +1163,13 @@
 
     <div id="preview-modal" class="modal-overlay" style="cursor: pointer;" onclick="if(event.target === this) closePreview();">
         <div class="modal-content" style="cursor: default;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <div class="modal-title">Náhľad PDF</div>
                 <button class="btn-modal btn-cancel" onclick="closePreview()" style="padding: 6px 12px;">Zavrieť</button>
             </div>
             <div id="preview-container" class="preview-container"></div>
-            <div style="text-align: right; margin-top: auto;">
+            <div id="modal-footer-actions" style="display: none; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                <button class="btn-modal btn-cancel" style="background-color: #64748b; color: white;" onclick="printPDF()">Tlačiť PDF</button>
                 <button class="btn-modal btn-save" onclick="exportPDF(); closePreview();">Stiahnuť PDF</button>
             </div>
         </div>
@@ -2668,10 +2669,13 @@ function buildPdfDefinition() {
             }
         }
 
-        function previewPDF() {
-            const btn = document.getElementById('preview-btn');
+        function previewPDF(isExportMode = false) {
+            const btn = isExportMode ? document.getElementById('export-btn') : document.getElementById('preview-btn');
             const originalText = btn.innerText;
             btn.innerText = '⚙️ PRIPRAVUJEM...';
+
+            const footer = document.getElementById('modal-footer-actions');
+            if (footer) footer.style.display = isExportMode ? 'flex' : 'none';
 
             try {
                 const { docDefinition } = buildPdfDefinition();
@@ -2827,6 +2831,16 @@ function closePreview() {
                     const container = document.getElementById('preview-container');
                     if (container) container.innerHTML = '';
                 }, 300);
+            }
+        }
+
+        function printPDF() {
+            try {
+                const { docDefinition } = buildPdfDefinition();
+                pdfMake.createPdf(docDefinition).print();
+            } catch (err) {
+                console.error(err);
+                alert('Chyba pri tlači PDF: ' + err.message);
             }
         }
 
