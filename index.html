@@ -836,6 +836,14 @@
             padding: 15px;
             box-sizing: border-box;
             text-align: center;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
         }
     </style>
 </head>
@@ -2685,6 +2693,7 @@ function buildPdfDefinition() {
                     const previewContainer = document.getElementById('preview-container');
                     previewContainer.innerHTML = '<div style="padding: 40px; color: #475569; font-weight: bold;">Načítavam náhľad...</div>';
                     document.getElementById('preview-modal').classList.add('show');
+                    document.body.classList.add('modal-open');
 
                     try {
                         const pdfData = atob(base64);
@@ -2827,6 +2836,7 @@ function closePreview() {
             const modal = document.getElementById('preview-modal');
             if (modal) {
                 modal.classList.remove('show');
+                document.body.classList.remove('modal-open');
                 setTimeout(() => {
                     const container = document.getElementById('preview-container');
                     if (container) container.innerHTML = '';
