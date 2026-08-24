@@ -2651,19 +2651,21 @@ function buildPdfDefinition() {
                         const pdf = await pdfjsLib.getDocument({data: uint8Array}).promise;
                         previewContainer.innerHTML = '';
 
+                        const RENDER_SCALE = 3.5;
+
                         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                             const page = await pdf.getPage(pageNum);
                             
-                            const containerWidth = previewContainer.clientWidth - 24; 
-                            const unscaledViewport = page.getViewport({ scale: 1 });
-                            const scale = Math.min(containerWidth / unscaledViewport.width, 1.5);
-                            const viewport = page.getViewport({ scale: scale });
+                            const viewport = page.getViewport({ scale: RENDER_SCALE });
 
                             const canvas = document.createElement('canvas');
                             const context = canvas.getContext('2d');
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
-                            canvas.style.maxWidth = '100%';
+                            
+                            canvas.width = Math.floor(viewport.width);
+                            canvas.height = Math.floor(viewport.height);
+                            
+                            canvas.style.width = '100%';
+                            canvas.style.maxWidth = '850px';
                             canvas.style.height = 'auto';
                             canvas.style.marginBottom = '20px';
                             canvas.style.backgroundColor = 'white';
@@ -2689,13 +2691,6 @@ function buildPdfDefinition() {
                 alert('Chyba pri generovaní náhľadu: ' + err.message);
                 btn.innerText = originalText;
             }
-        }
-
-        function closePreview() {
-            document.getElementById('preview-modal').classList.remove('show');
-            setTimeout(() => {
-                document.getElementById('preview-container').innerHTML = '';
-            }, 300);
         }
 
         document.addEventListener('change', async function(e) {
