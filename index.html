@@ -802,12 +802,16 @@
             padding-top: 4px;
         }
 
-        .preview-iframe {
+        .preview-container {
             width: 100%;
             height: calc(100vh - 140px);
             border: 1px solid var(--color-border);
             border-radius: 6px;
-            background-color: #f1f5f9;
+            background-color: #cbd5e1;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: center;
         }
         
         #preview-modal .modal-content {
@@ -1144,7 +1148,7 @@
                 <div class="modal-title">Náhľad PDF</div>
                 <button class="btn-modal btn-cancel" onclick="closePreview()" style="padding: 6px 12px;">Zavrieť</button>
             </div>
-            <iframe id="preview-iframe" class="preview-iframe"></iframe>
+            <div id="preview-container" class="preview-container"></div>
             <div style="text-align: right; margin-top: auto;">
                 <button class="btn-modal btn-save" onclick="exportPDF(); closePreview();">Stiahnuť PDF</button>
             </div>
@@ -2632,11 +2636,53 @@ function buildPdfDefinition() {
                 const { docDefinition } = buildPdfDefinition();
                 const pdfDocGenerator = pdfMake.createPdf(docDefinition);
                 
-                pdfDocGenerator.getDataUrl((dataUrl) => {
-                    const iframe = document.getElementById('preview-iframe');
-                    iframe.src = dataUrl;
+                pdfDocGenerator.getBase64(async (base64) => {
+                    const previewContainer = document.getElementById('preview-container');
+                    previewContainer.innerHTML = '<div style="padding: 40px; color: #475569; font-weight: bold;">Načítavam náhľad...</div>';
                     document.getElementById('preview-modal').classList.add('show');
-                    btn.innerText = originalText;
+
+                    try {
+                        const pdfData = atob(base64);
+                        const uint8Array = new Uint8Array(pdfData.length);
+                        for (let i = 0; i < pdfData.length; i++) {
+                            uint8Array[i] = pdfData.charCodeAt(i);
+                        }
+
+                        const pdf = await pdfjsLib.getDocument({data: uint8Array}).promise;
+                        previewContainer.innerHTML = '';
+
+                        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                            const page = await pdf.getPage(pageNum);
+                            
+                            const containerWidth = previewContainer.clientWidth - 24; 
+                            const unscaledViewport = page.getViewport({ scale: 1 });
+                            const scale = Math.min(containerWidth / unscaledViewport.width, 1.5);
+                            const viewport = page.getViewport({ scale: scale });
+
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            canvas.style.maxWidth = '100%';
+                            canvas.style.height = 'auto';
+                            canvas.style.marginBottom = '20px';
+                            canvas.style.backgroundColor = 'white';
+                            canvas.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+
+                            previewContainer.appendChild(canvas);
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            await page.render(renderContext).promise;
+                        }
+                        btn.innerText = originalText;
+                    } catch (renderError) {
+                        console.error(renderError);
+                        previewContainer.innerHTML = '<div style="padding: 40px; color: #e74c3c;">Nepodarilo sa zobraziť náhľad. PDF si ale môžete normálne stiahnuť.</div>';
+                        btn.innerText = originalText;
+                    }
                 });
             } catch (err) {
                 console.error(err);
@@ -2648,7 +2694,7 @@ function buildPdfDefinition() {
         function closePreview() {
             document.getElementById('preview-modal').classList.remove('show');
             setTimeout(() => {
-                document.getElementById('preview-iframe').src = '';
+                document.getElementById('preview-container').innerHTML = '';
             }, 300);
         }
 
