@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Denná Dispozícia</title>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
@@ -803,12 +801,27 @@
             padding: 0;
             padding-top: 4px;
         }
+
+        .preview-iframe {
+            width: 100%;
+            height: calc(100vh - 140px);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background-color: #f1f5f9;
+        }
+        
+        #preview-modal .modal-content {
+            max-width: 900px;
+            width: 95%;
+            height: 95vh;
+        }
     </style>
 </head>
 <body>
 
     <div class="top-controls">
         <button class="btn-action" onclick="resetData()">↺ RESETOVAŤ ÚDAJE</button>
+        
         <div style="flex: 1 1 0; position: relative; min-width: 0; display: flex;">
             <button id="theme-btn" class="btn-action theme-select" style="width: 100%; margin: 0;" onclick="toggleThemeMenu(event)">Modrá</button>
             <div id="theme-menu" class="custom-dropdown-menu">
@@ -821,9 +834,10 @@
                 <div style="background-color: #64748b; color: white;" onclick="selectTheme('gray', 'Sivá')">Sivá</div>
             </div>
         </div>
+
+        <button id="export-btn" class="btn-action btn-green" onclick="exportPDF()">⬇ EXPORT PDF</button>
                 
-        <button class="btn-action btn-primary" onclick="exportPDF()">📄 EXPORT PDF</button>
-        <button class="btn-action btn-green btn-excel" onclick="exportExcel()">📊 EXPORT EXCEL</button>
+        <button id="preview-btn" class="btn-action btn-primary" onclick="previewPDF()">👁 NÁHĽAD</button>
     </div>
 
     <div class="document-container" id="dynamic-content">
@@ -1120,6 +1134,19 @@
             <div class="modal-actions">
                 <button class="btn-modal btn-cancel" onclick="closeModal()">Zrušiť</button>
                 <button class="btn-modal btn-save" onclick="saveModal()">Uložiť</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="modal-title">Náhľad PDF</div>
+                <button class="btn-modal btn-cancel" onclick="closePreview()" style="padding: 6px 12px;">Zavrieť</button>
+            </div>
+            <iframe id="preview-iframe" class="preview-iframe"></iframe>
+            <div style="text-align: right; margin-top: auto;">
+                <button class="btn-modal btn-save" onclick="exportPDF(); closePreview();">Stiahnuť PDF</button>
             </div>
         </div>
     </div>
@@ -2267,32 +2294,7 @@
             return null;
         }
 
-        async function exportExcel() {
-            const btn = document.querySelector('.btn-excel');
-            btn.innerText = '⚙️ PRIPRAVUJEM...';
-
-            const wb = new ExcelJS.Workbook();
-            const ws = wb.addWorksheet('Call Sheet', {
-                pageSetup: {
-                    paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0,
-                    margins: { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0, footer: 0 }
-                }
-            });
-
-            ws.columns = [ { width: 12 }, { width: 5 }, { width: 20 }, { width: 24 }, { width: 15 }, { width: 10 }, { width: 56 } ];
-
-            const tC = getThemeColors();
-            const DARK_BG = tC.exPrimary, ACCENT = tC.exAccent, ACCENT_LIGHT = tC.exLight, LIGHT_GRAY = 'FFF2F4F4', TEXT_COLOR = 'FF2C3E50', WHITE = 'FFFFFFFF', BORDER_COLOR = 'FFBDC3C7';
-            const YELLOW_LUNCH = 'FFF9E79F';
-            const thinBorder = { top: {style:'thin', color:{argb:BORDER_COLOR}}, left: {style:'thin', color:{argb:BORDER_COLOR}}, bottom: {style:'thin', color:{argb:BORDER_COLOR}}, right: {style:'thin', color:{argb:BORDER_COLOR}} };
-
-            function styleCell(cell, bg, color, bold, size, alignH, alignV, border) {
-                if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-                cell.font = { name: 'Arial', color: { argb: color }, bold: bold, size: size };
-                cell.alignment = { horizontal: alignH, vertical: alignV, wrapText: true };
-                if (border) cell.border = border;
-            }
-
+function buildPdfDefinition() {
             const proj = getVal('Názov projektu') || 'PROJEKT';
             const dateFieldText = document.getElementById('date-field') ? document.getElementById('date-field').innerText : 'DÁTUM';
             const day = getVal('Filmovací deň') || '';
@@ -2308,88 +2310,150 @@
             });
             const extraProjStr = extraProjInfo.length > 0 ? '  |  ' + extraProjInfo.join('  |  ') : '';
 
-            ws.mergeCells('A1:G1'); 
-            const titleCell = ws.getCell('A1');
-            titleCell.value = `DENNÁ DISPOZÍCIA  |  ${dateFieldText.toUpperCase()}`;
-            styleCell(titleCell, DARK_BG, 'FF111827', true, 16, 'center', 'middle', { top: thinBorder.top, left: thinBorder.left, right: thinBorder.right, bottom: { style: 'thin', color: { argb: 'FFBDC3C7' } } });
-            for(let c=1; c<=7; c++) ws.getCell(1, c).border = { top: thinBorder.top, left: thinBorder.left, right: thinBorder.right, bottom: thinBorder.bottom };
-            ws.getRow(1).height = 25; 
-            
-            ws.mergeCells('A2:G2'); 
-            const subTitleCell = ws.getCell('A2');
-            subTitleCell.value = `${proj.toUpperCase()}  |  ${day}. natáčací deň${extraProjStr}`;
-            styleCell(subTitleCell, DARK_BG, 'FF111827', true, 12, 'center', 'middle', thinBorder);
-            for(let c=1; c<=7; c++) ws.getCell(2, c).border = thinBorder;
-            ws.getRow(2).height = 20;
+            let crewStr = [];
+            const crewSecPdf = document.getElementById('crew-section');
+            if (crewSecPdf && !crewSecPdf.classList.contains('ignored-in-export')) {
+                crewSecPdf.querySelectorAll('.layout-cell').forEach(cell => {
+                    const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
+                    const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
+                    if (lbl && val) crewStr.push(`${lbl}: ${val}`);
+                });
+            }
 
-            let wfEx = document.getElementById('weather-field');
-            let rawWeatherText = wfEx ? wfEx.innerText : '';
-            if (rawWeatherText.includes('automaticky')) rawWeatherText = '';
-            let weatherParts = rawWeatherText.split('|').map(p => p.trim());
-            let rawWeatherDesc = weatherParts[0] || '';
-            let emojiMatchEx = rawWeatherDesc.match(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{FE0F}]/u);
-            let wEmoji = emojiMatchEx ? emojiMatchEx[0] : '';
-            let wDescText = rawWeatherDesc.replace(wEmoji, '').trim();
-            let wSunr = weatherParts[1] || '';
-            let wSuns = weatherParts[2] || '';
+            let transStr = [];
+            const transSecPdf = document.getElementById('transport-section');
+            if (transSecPdf && !transSecPdf.classList.contains('ignored-in-export')) {
+                transSecPdf.querySelectorAll('.layout-cell').forEach(cell => {
+                    const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
+                    const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
+                    if (lbl && val) transStr.push(`${lbl}: ${val}`);
+                });
+            }
 
             let prodInfo = [];
             const prodCells = document.getElementById('production-section') ? document.getElementById('production-section').querySelectorAll('.layout-cell') : [];
-            prodCells.forEach((cell, idx, arr) => {
+            prodCells.forEach(cell => {
                 const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
                 const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
                 if (lbl && val) {
+                    if (prodInfo.length > 0) prodInfo.push({ text: '\n' });
                     prodInfo.push({ text: `${lbl}: `, bold: true, fontSize: 9 });
-                    prodInfo.push({ text: `${val}${idx < arr.length - 1 ? '\n' : ''}`, bold: false, fontSize: 7.5 });
+                    prodInfo.push({ text: val, bold: false, fontSize: 7.5 });
                 }
             });
 
-            let prodRichText = [];
-            prodInfo.forEach(p => prodRichText.push({ font: { name: 'Arial', size: p.fontSize, bold: p.bold, color: { argb: TEXT_COLOR } }, text: p.text }));
-            
-            ws.mergeCells('A4:B4'); styleCell(ws.getCell('A4'), ACCENT, 'FF111827', true, 11, 'center', 'middle', thinBorder); ws.getCell('A4').value = "PRODUKCIA";
-            ws.mergeCells('A5:B7'); styleCell(ws.getCell('A5'), LIGHT_GRAY, TEXT_COLOR, false, 10, 'left', 'top', thinBorder); ws.getCell('A5').value = { richText: prodRichText };
+            const weatherSvgs = {
+                '☀️': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#f1c40f" stroke="#2c3e50" stroke-width="0.5"/><path d="M12 5v2M12 17v2M5 12h2M17 12h2M7.05 7.05l1.41 1.41M15.54 15.54l1.41 1.41M16.95 7.05l-1.41 1.41M8.46 15.54l-1.41 1.41" stroke="#d35400" stroke-width="0.65" stroke-linecap="round"/></svg>',
+                '⛅': '<svg viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.5" fill="#f1c40f" stroke="#2c3e50" stroke-width="0.5"/><path d="M15 3.5v1.2M18.5 8h1.2M17.47 5.53l.85-.85M12.53 5.53l-.85-.85M17.47 10.47l.85.85" stroke="#d35400" stroke-width="0.6" stroke-linecap="round"/><path d="M15 13c0-2.21-1.79-4-4-4-1.1 0-2.1.43-2.83 1.13A3.5 3.5 0 0 0 3 13.5C3 15.43 4.57 17 6.5 17H15c.82 0 1.5-.68 1.5-1.5 0-.28-.08-.54-.23-.77z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/></svg>',
+                '☁️': '<svg viewBox="-2 -2 28 28"><path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/></svg>',
+                '🌫️': '<svg viewBox="0 0 24 24"><path d="M3 9h18M3 13h18M5 17h14" stroke="#7f8c8d" stroke-width="0.75" stroke-linecap="round"/></svg>',
+                '🌧️': '<svg viewBox="0 0 24 24"><path d="M16 11c0-2.21-1.79-4-4-4-1.1 0-2.1.43-2.83 1.13A3.5 3.5 0 0 0 4 11.5C4 13.43 5.57 15 7.5 15H16c.82 0 1.5-.68 1.5-1.5 0-.28-.08-.54-.23-.77z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/><path d="M7 17v3m4-3v3m4-3v3" stroke="#2980b9" stroke-width="0.65" stroke-linecap="round"/></svg>',
+                '❄️': '<svg viewBox="0 0 24 24"><path d="M12 2v20m10-10H2m17.07-7.07l-14.14 14.14m14.14 0L4.93 4.93" stroke="#2980b9" stroke-width="0.65" stroke-linecap="round"/></svg>',
+                '🌦️': '<svg viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.5" fill="#f1c40f" stroke="#2c3e50" stroke-width="0.5"/><path d="M15 3.5v1.2M18.5 8h1.2M17.47 5.53l.85-.85M12.53 5.53l-.85-.85M17.47 10.47l.85.85" stroke="#d35400" stroke-width="0.6" stroke-linecap="round"/><path d="M15 13c0-2.21-1.79-4-4-4-1.1 0-2.1.43-2.83 1.13A3.5 3.5 0 0 0 3 13.5C3 15.43 4.57 17 6.5 17H15c.82 0 1.5-.68 1.5-1.5 0-.28-.08-.54-.23-.77z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/><path d="M7 19v2m4-2v2m4-2v2" stroke="#2980b9" stroke-width="0.65" stroke-linecap="round"/></svg>',
+                '⛈️': '<svg viewBox="-2 -2 28 28"><path d="M19.36 8.04C18.67 4.59 15.64 2 12 2 9.11 2 6.6 3.64 5.35 6.04 2.34 6.36 0 8.91 0 12c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" fill="#7f8c8d" stroke="#2c3e50" stroke-width="0.5"/><path d="M11 13l-2.5 3.5h3l-2.5 3.5" fill="none" stroke="#f1c40f" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                '🌡️': '<svg viewBox="0 0 24 24"><path d="M14 12.76V4a2 2 0 0 0-4 0v8.76a3.5 3.5 0 1 0 4 0z" fill="#ecf0f1" stroke="#c0392b" stroke-width="0.6"/><circle cx="12" cy="16.5" r="2" fill="#c0392b"/><path d="M12 13V8" stroke="#c0392b" stroke-width="0.6" stroke-linecap="round"/></svg>'
+            };
 
-            const weatherTitleEx = document.getElementById('weather-label') ? document.getElementById('weather-label').innerText.toUpperCase() : "POČASIE";
-            ws.mergeCells('C4:E4'); styleCell(ws.getCell('C4'), ACCENT, 'FF111827', true, 11, 'center', 'middle', thinBorder); ws.getCell('C4').value = weatherTitleEx;
-            ws.mergeCells('C5:E7'); 
-            const weatherCellEx = ws.getCell('C5');
-            weatherCellEx.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ACCENT_LIGHT } };
-            weatherCellEx.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-            if (wEmoji) {
-                weatherCellEx.value = {
-                    richText: [
-                        { font: { name: 'Arial', size: 28 }, text: wEmoji + '\n' },
-                        { font: { name: 'Arial', size: 10, bold: true, color: { argb: TEXT_COLOR } }, text: wDescText + '\n' },
-                        { font: { name: 'Arial', size: 10, color: { argb: TEXT_COLOR } }, text: wSunr + '\n' },
-                        { font: { name: 'Arial', size: 10, color: { argb: TEXT_COLOR } }, text: wSuns }
-                    ]
-                };
+            let wfPdf = document.getElementById('weather-field');
+            let rawWeather = wfPdf ? wfPdf.innerText : '';
+            if (rawWeather.includes('automaticky')) rawWeather = '';
+            let matchedEmoji = Object.keys(weatherSvgs).find(emoji => rawWeather.includes(emoji));
+            let cleanWeather = rawWeather.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{FE0F}]/gu, '').trim();
+            
+            const tC = getThemeColors();
+            const weatherTitlePdf = document.getElementById('weather-label') ? document.getElementById('weather-label').innerText.toUpperCase() : 'POČASIE';
+            
+            let weatherCell = { fillColor: tC.light, margin: [2, 4, 2, 4], border: [true, false, true, true] };
+            let textLines = cleanWeather.split('|').map(p => p.trim()).join('\n');
+            
+            if (matchedEmoji && weatherSvgs[matchedEmoji]) {
+                weatherCell.columns = [
+                    { width: '45%', stack: [{ svg: weatherSvgs[matchedEmoji], width: 42, alignment: 'right' }], margin: [0, -2, 6, 0] },
+                    { width: '55%', text: textLines, alignment: 'left', bold: true, fontSize: 9, margin: [0, 1, 0, 0] }
+                ];
             } else {
-                weatherCellEx.value = {
-                    richText: [
-                        { font: { name: 'Arial', size: 10, bold: true, color: { argb: TEXT_COLOR } }, text: wDescText + '\n' },
-                        { font: { name: 'Arial', size: 10, color: { argb: TEXT_COLOR } }, text: wSunr + '\n' },
-                        { font: { name: 'Arial', size: 10, color: { argb: TEXT_COLOR } }, text: wSuns }
-                    ]
-                };
+                weatherCell.stack = [{ text: textLines, alignment: 'center', bold: true, fontSize: 9, margin: [0, 2, 0, 0] }];
             }
 
-            ws.mergeCells('F4:G4'); styleCell(ws.getCell('F4'), ACCENT, 'FF111827', true, 11, 'center', 'middle', thinBorder); ws.getCell('F4').value = "LOKÁCIE";
-            let adrVal = getVal('Hlavná Lokácia');
-            ws.mergeCells('F5:G5'); styleCell(ws.getCell('F5'), LIGHT_GRAY, TEXT_COLOR, false, 10, 'left', 'middle', thinBorder); ws.getCell('F5').value = adrVal ? "Hlavná lokácia: " + adrVal.replace(/\n/g, ', ') : "";
-            let zazVal = getVal('Zázemie');
-            ws.mergeCells('F6:G6'); styleCell(ws.getCell('F6'), LIGHT_GRAY, TEXT_COLOR, false, 10, 'left', 'middle', thinBorder); ws.getCell('F6').value = zazVal ? "Zázemie: " + zazVal : "";
-            let parkVal = getVal('Parkovanie');
-            ws.mergeCells('F7:G7'); styleCell(ws.getCell('F7'), LIGHT_GRAY, TEXT_COLOR, false, 10, 'left', 'middle', thinBorder); ws.getCell('F7').value = parkVal ? "Parkovanie: " + parkVal : "";
-            
-            ws.getRow(4).height = 30; ws.getRow(5).height = 24; ws.getRow(6).height = 24; ws.getRow(7).height = 24;
-            for (let r = 4; r <= 7; r++) { for (let c = 1; c <= 7; c++) { ws.getCell(r, c).border = thinBorder; } }
+            const tableLayout = {
+                hLineWidth: function(i, node) { return 0.5; },
+                vLineWidth: function(i, node) { return 0.5; },
+                hLineColor: function(i, node) { return '#BDC3C7'; },
+                vLineColor: function(i, node) { return '#BDC3C7'; },
+                fillColor: function (rowIndex, node, columnIndex) {
+                    if (rowIndex === 0) return tC.accent; 
+                    return (rowIndex % 2 === 0) ? '#F2F4F4' : '#FFFFFF'; 
+                }
+            };
 
-            let rowIdx = 9;
+            const blockLayout = {
+                hLineWidth: function(i, node) { return 0.5; },
+                vLineWidth: function(i, node) { return 0.5; },
+                hLineColor: function(i, node) { return '#BDC3C7'; },
+                vLineColor: function(i, node) { return '#BDC3C7'; }
+            };
+
+            const docDefinition = {
+                pageSize: 'A4',
+                pageOrientation: 'portrait',
+                pageMargins: [10, 10, 10, 20],
+                footer: function(currentPage, pageCount) {
+                    return {
+                        columns: [
+                            { text: '', width: '30%' },
+                            { text: currentPage < pageCount ? '... pokračovanie na ďalšej strane ...' : '', color: '#e74c3c', alignment: 'center', fontSize: 7, width: '40%', italics: true },
+                            { text: 'Produced by barameter.sk', color: '#000000', alignment: 'right', fontSize: 7, width: '30%' }
+                        ],
+                        margin: [10, 5, 10, 0]
+                    };
+                },
+                defaultStyle: { font: 'Roboto', fontSize: 7.5, color: '#2c3e50' },
+                content: [
+                    { 
+                    table: { widths: ['*'], body: [
+                        [{ text: `DENNÁ DISPOZÍCIA  |  ${dateFieldText.toUpperCase()}`, fontSize: 12, bold: true, color: '#111827', alignment: 'center', fillColor: tC.light, margin: [0, 4, 0, 2], border: [true, true, true, false] }],
+                        [{ text: `${proj.toUpperCase()}  |  ${day}. natáčací deň${extraProjStr}`, fontSize: 8.5, bold: true, color: '#111827', alignment: 'center', fillColor: tC.light, margin: [0, 2, 0, 4], border: [true, false, true, true] }]
+                    ]},
+                    layout: {
+                        hLineWidth: function(i, node) { return 0.5; },
+                        vLineWidth: function(i, node) { return 0.5; },
+                        hLineColor: function(i, node) { return '#BDC3C7'; },
+                        vLineColor: function(i, node) { return '#BDC3C7'; }
+                    },
+                    margin: [0, 0, 0, 5]
+                },
+                    {
+                        table: {
+                            widths: ['32%', '2%', '32%', '2%', '32%'],
+                            body: [
+                                [
+                                    { text: 'PRODUKCIA', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] },
+                                    { text: '', border: [false, false, false, false] },
+                                    { text: weatherTitlePdf, fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] },
+                                    { text: '', border: [false, false, false, false] },
+                                    { text: 'LOKÁCIE', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }
+                                ],
+                                [
+                                    { text: prodInfo, fillColor: '#F2F4F4', margin: [2, 4, 2, 4], border: [true, false, true, true], lineHeight: 1.2 },
+                                    { text: '', border: [false, false, false, false] },
+                                    weatherCell,
+                                    { text: '', border: [false, false, false, false] },
+                                    { text: [
+                                        ...(getVal('Hlavná Lokácia') ? [{ text: 'Hlavná lokácia: ', bold: true, fontSize: 9 }, { text: `${getVal('Hlavná Lokácia').replace(/\n/g, ', ')}\n`, bold: false, fontSize: 7.5 }] : []),
+                                        ...(getVal('Zázemie') ? [{ text: 'Zázemie: ', bold: true, fontSize: 9 }, { text: `${getVal('Zázemie')}\n`, bold: false, fontSize: 7.5 }] : []),
+                                        ...(getVal('Parkovanie') ? [{ text: 'Parkovanie: ', bold: true, fontSize: 9 }, { text: getVal('Parkovanie'), bold: false, fontSize: 7.5 }] : [])
+                                    ], fillColor: '#F2F4F4', margin: [2, 4, 2, 4], border: [true, false, true, true], lineHeight: 1.2 }
+                                ]
+                            ]
+                        },
+                        layout: blockLayout,
+                        margin: [0, 0, 0, 5]
+                    }
+                ]
+            };
+
             const noticeCells = document.getElementById('notices-section') ? document.getElementById('notices-section').querySelectorAll('.layout-cell') : [];
             noticeCells.forEach(cell => {
-                
                 const lblEl = cell.querySelector('.editable-label');
                 const valEl = cell.querySelector('.editable');
                 let lbl = lblEl ? lblEl.innerText.trim() : '';
@@ -2399,512 +2463,193 @@
                 
                 if (!lbl && !val) return;
 
-                const argbLblColor = getArgbFromRgb(lblEl ? lblEl.style.backgroundColor : '') || ACCENT;
-                const argbValColor = getArgbFromRgb(valEl ? valEl.style.backgroundColor : '');
+                const hexLblColor = getHexFromRgb(lblEl ? lblEl.style.backgroundColor : '') || tC.accent;
+                const hexValColor = getHexFromRgb(valEl ? valEl.style.backgroundColor : '');
                 
-                if (lbl) {
-                    ws.mergeCells(`A${rowIdx}:G${rowIdx}`); 
-                    const lCell = ws.getCell(`A${rowIdx}`);
-                    lCell.value = lbl.toUpperCase();
-                    styleCell(lCell, argbLblColor, 'FF111827', true, 11, 'center', 'middle', thinBorder);
-                    ws.getRow(rowIdx).height = 20;
-                    for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                    rowIdx++;
+                const blockBody = [];
+                if (lbl && val) {
+                    blockBody.push([{ text: lbl.toUpperCase(), fontSize: 8, bold: true, color: '#111827', alignment: 'center', fillColor: hexLblColor, margin: [0, 2, 0, 2], border: [true, true, true, false] }]);
+                    const fontColor = (hexValColor && hexValColor.toUpperCase() === '#333333') ? 'white' : (hexValColor ? '#111827' : '#2c3e50');
+                    const bgColor = hexValColor || '#F2F4F4';
+                    blockBody.push([{ text: val, fontSize: 8, bold: !!hexValColor, color: fontColor, alignment: 'center', fillColor: bgColor, margin: [0, 2, 0, 2], border: [true, false, true, true] }]);
+                } else if (lbl) {
+                    blockBody.push([{ text: lbl.toUpperCase(), fontSize: 8, bold: true, color: '#111827', alignment: 'center', fillColor: hexLblColor, margin: [0, 2, 0, 2], border: [true, true, true, true] }]);
+                } else if (val) {
+                    const fontColor = (hexValColor && hexValColor.toUpperCase() === '#333333') ? 'white' : (hexValColor ? '#111827' : '#2c3e50');
+                    const bgColor = hexValColor || '#F2F4F4';
+                    blockBody.push([{ text: val, fontSize: 8, bold: !!hexValColor, color: fontColor, alignment: 'center', fillColor: bgColor, margin: [0, 2, 0, 2], border: [true, true, true, true] }]);
                 }
                 
-                if (val) {
-                    ws.mergeCells(`A${rowIdx}:G${rowIdx}`); 
-                    const vCell = ws.getCell(`A${rowIdx}`);
-                    vCell.value = val;
-                    const vFont = argbValColor === 'FF333333' ? WHITE : (argbValColor ? 'FF111827' : TEXT_COLOR);
-                    const vBg = argbValColor || LIGHT_GRAY;
-                    styleCell(vCell, vBg, vFont, !!argbValColor, 11, 'center', 'middle', thinBorder);
-                    const lines = (val.match(/\n/g) || []).length + 1;
-                    ws.getRow(rowIdx).height = Math.max(25, lines * 15);
-                    for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                    rowIdx++;
-                }
-                
-                ws.getRow(rowIdx).height = 10;
-                rowIdx++;
+                docDefinition.content.push({ table: { widths: ['*'], body: blockBody }, layout: blockLayout, margin: [0, 0, 0, 5] });
             });
 
-            const crewSec = document.getElementById('crew-section');
-            if (crewSec && !crewSec.classList.contains('ignored-in-export')) {
-                ws.mergeCells(`A${rowIdx}:G${rowIdx}`); styleCell(ws.getCell(`A${rowIdx}`), ACCENT, 'FF111827', true, 11, 'center', 'middle', thinBorder); ws.getCell(`A${rowIdx}`).value = "NÁSTUPY NA PĽAC";
-                for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                let crewStr = [];
-                crewSec.querySelectorAll('.layout-cell').forEach(cell => {
-                    const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
-                    const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
-                    if (lbl && val) crewStr.push(`${lbl}: ${val}`);
+            if (crewStr.length > 0) {
+                docDefinition.content.push({
+                    table: { widths: ['*'], body: [
+                        [{ text: 'NÁSTUPY NA PĽAC', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
+                        [{ text: crewStr.join('  |  '), fillColor: '#F2F4F4', alignment: 'center', margin: [0, 2, 0, 2], border: [true, false, true, true] }]
+                    ]},
+                    layout: blockLayout, margin: [0, 0, 0, 5]
                 });
-                rowIdx++;
-                ws.mergeCells(`A${rowIdx}:G${rowIdx}`); styleCell(ws.getCell(`A${rowIdx}`), LIGHT_GRAY, TEXT_COLOR, false, 10, 'center', 'middle', thinBorder);
-                ws.getCell(`A${rowIdx}`).value = crewStr.join('  |  '); ws.getRow(rowIdx).height = 25;
-                for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                rowIdx++;
             }
 
-            const transSec = document.getElementById('transport-section');
-            if (transSec && !transSec.classList.contains('ignored-in-export')) {
-                ws.mergeCells(`A${rowIdx}:G${rowIdx}`); styleCell(ws.getCell(`A${rowIdx}`), ACCENT, 'FF111827', true, 11, 'center', 'middle', thinBorder); ws.getCell(`A${rowIdx}`).value = "TRANSPORT";
-                for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                let transStr = [];
-                transSec.querySelectorAll('.layout-cell').forEach(cell => {
-                    const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
-                    const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
-                    if (lbl && val) transStr.push(`${lbl}: ${val}`);
+            if (transStr.length > 0) {
+                docDefinition.content.push({
+                    table: { widths: ['*'], body: [
+                        [{ text: 'TRANSPORT', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
+                        [{ text: transStr.join('  |  '), fillColor: '#F2F4F4', alignment: 'center', margin: [0, 2, 0, 2], border: [true, false, true, true] }]
+                    ]},
+                    layout: blockLayout, margin: [0, 0, 0, 5]
                 });
-                rowIdx++;
-                ws.mergeCells(`A${rowIdx}:G${rowIdx}`); styleCell(ws.getCell(`A${rowIdx}`), LIGHT_GRAY, TEXT_COLOR, false, 10, 'center', 'middle', thinBorder);
-                ws.getCell(`A${rowIdx}`).value = transStr.join('  |  '); ws.getRow(rowIdx).height = 25;
-                for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                rowIdx++;
             }
-
-            rowIdx += 2;
 
             const scenes = getTableData('scény');
             if (scenes.length > 0) {
-                const headers = ["Čas", "Obraz", "Lokácia", "Popis akcie", "Účinkujúci", "Rekvizity / Poznámky"];
-                const colSpans = [[1,1], [2,2], [3,3], [4,4], [5,6], [7,7]];
-                for(let c=0; c<6; c++) {
-                    ws.mergeCells(rowIdx, colSpans[c][0], rowIdx, colSpans[c][1]);
-                    const cell = ws.getCell(rowIdx, colSpans[c][0]);
-                    cell.value = headers[c].toUpperCase();
-                    styleCell(cell, ACCENT, 'FF111827', true, 10, 'center', 'middle', thinBorder);
-                    ws.getCell(rowIdx, colSpans[c][1]).border = thinBorder;
-                }
-                rowIdx++;
-                scenes.forEach(rowData => {
-                    let maxLines = 1;
-                    const isLunch = rowData.isLunch;
-                    const isBold = isLunch;
-
-                    // Kalkulacka na orezanie Popisu akcie
-                    if (!isLunch && rowData[3] && rowData[4] && rowData[5]) {
-                        let castL = rowData[4].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 30)), 0);
-                        let propsL = rowData[5].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 35)), 0);
-                        let actL = rowData[3].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 32)), 0);
+                const sceneBody = [];
+                sceneBody.push([
+                    { text: 'ČAS', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                    { text: 'OBRAZ', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                    { text: 'LOKÁCIA', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                    { text: 'POPIS AKCIE', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                    { text: 'ÚČINKUJÚCI', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                    { text: 'REKVIZITY', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] }
+                ]);
+                scenes.forEach(row => {
+                    const isLunch = row.isLunch;
+                    
+                    if (!isLunch && row[3] && row[4] && row[5]) {
+                        let castL = row[4].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 30)), 0);
+                        let propsL = row[5].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 35)), 0);
+                        let actL = row[3].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 32)), 0);
                         
                         if (propsL > 2) {
-                            rowData[5].text = rowData[5].text.replace(/\n/g, ' ').substring(0, 45).trim() + "... (viz scenár)";
+                            row[5].text = row[5].text.replace(/\n/g, ' ').substring(0, 45).trim() + "... (viz scenár)";
                             propsL = 2;
                         }
 
                         if (castL < 3 && propsL < 3 && actL > 2) {
-                            rowData[3].text = rowData[3].text.replace(/\n/g, ' ').substring(0, 62).trim() + "...";
+                            row[3].text = row[3].text.replace(/\n/g, ' ').substring(0, 62).trim() + "...";
                         }
                     }
 
+                    const rowCells = [];
                     for(let c=0; c<6; c++) {
-                        if(c >= rowData.length) break;
-                        ws.mergeCells(rowIdx, colSpans[c][0], rowIdx, colSpans[c][1]);
-                        const cell = ws.getCell(rowIdx, colSpans[c][0]);
-                        cell.value = rowData[c].text;
-                        
-                        let argbBg = getArgbFromRgb(rowData[c].bg);
-                        let isCustomDark = argbBg && argbBg !== 'FFF9E79F' && argbBg !== 'FFFFFFFF';
-                        let cellBgColor = argbBg || (isLunch ? YELLOW_LUNCH : null);
-                        let cellFontColor = argbBg === 'FF333333' ? WHITE : (isCustomDark ? 'FF111827' : TEXT_COLOR);
-                        
+                        let cell = row[c] || { text: '', bg: '' };
+                        let hexBg = getHexFromRgb(cell.bg);
+                        let isDark = hexBg && hexBg.toUpperCase() !== '#F9E79F' && hexBg.toUpperCase() !== '#FFFFFF';
+                        let cellBg = hexBg || (isLunch ? '#F9E79F' : null);
+                        let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
                         let alignH = (c === 1) ? 'center' : 'left';
-                        styleCell(cell, cellBgColor, cellFontColor, isBold || isCustomDark, 10, alignH, 'top', thinBorder);
-                        ws.getCell(rowIdx, colSpans[c][1]).border = thinBorder;
-                        const lines = (rowData[c].text.match(/\n/g) || []).length + 1 + Math.floor(rowData[c].text.length / (c===4?40:20));
-                        if(lines > maxLines) maxLines = lines;
+                        rowCells.push({ text: cell.text, alignment: alignH, margin: [1, 2, 1, 2], fillColor: cellBg, color: fontColor, bold: isLunch || isDark, noWrap: c === 0 });
                     }
-                    ws.getRow(rowIdx).height = Math.max(25, maxLines * 15);
-                    rowIdx++;
+                    sceneBody.push(rowCells);
+                });
+                docDefinition.content.push({
+                    table: { headerRows: 1, dontBreakRows: true, widths: ['auto', 'auto', '20%', '24%', '*', '*'], body: sceneBody },
+                    layout: tableLayout, margin: [0, 0, 0, 5]
                 });
             }
-            rowIdx++;
 
             const casts = getTableData('herci');
             if (casts.length > 0) {
-                ws.mergeCells(`A${rowIdx}:G${rowIdx}`); styleCell(ws.getCell(`A${rowIdx}`), ACCENT, 'FF111827', true, 11, 'center', 'middle', thinBorder);
-                ws.getCell(`A${rowIdx}`).value = "HERCI / CAST"; for(let c=2; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder; rowIdx++;
-
-                const headers = ["Účinkujúci", "Odchod (Pick Up)", "Kostýmy / Masky", "Na pľaci (On Set)"];
-                const colSpans = [[1,2], [3,4], [5,6], [7,7]];
-                for(let c=0; c<4; c++) {
-                    ws.mergeCells(rowIdx, colSpans[c][0], rowIdx, colSpans[c][1]);
-                    const cell = ws.getCell(rowIdx, colSpans[c][0]);
-                    cell.value = headers[c].toUpperCase();
-                    styleCell(cell, LIGHT_GRAY, TEXT_COLOR, true, 10, 'center', 'middle', thinBorder);
-                    ws.getCell(rowIdx, colSpans[c][1]).border = thinBorder;
-                }
-                rowIdx++;
-                casts.forEach(rowData => {
+                docDefinition.content.push({
+                    table: { widths: ['*'], body: [[{ text: 'HERCI / CAST', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [false, false, false, false] }]] },
+                    layout: 'noBorders'
+                });
+                const castBody = [];
+                castBody.push([
+                { text: 'ÚČINKUJÚCI', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                { text: 'ODCHOD (PICK UP)', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                { text: 'KOSTÝMY / MASKY', bold: true, alignment: 'center', margin:[0,1,0,1] },
+                { text: 'NA PĽACI (ON SET)', bold: true, alignment: 'center', margin:[0,1,0,1] }
+            ]);
+                casts.forEach(row => {
+                    const rowCells = [];
                     for(let c=0; c<4; c++) {
-                        if(c >= rowData.length) break;
-                        ws.mergeCells(rowIdx, colSpans[c][0], rowIdx, colSpans[c][1]);
-                        const cell = ws.getCell(rowIdx, colSpans[c][0]);
-                        cell.value = rowData[c].text;
-
-                        let argbBg = getArgbFromRgb(rowData[c].bg);
-                        let isCustomDark = argbBg && argbBg !== 'FFFFFFFF';
-                        let cellFontColor = argbBg === 'FF333333' ? WHITE : (isCustomDark ? 'FF111827' : TEXT_COLOR);
-
-                        styleCell(cell, argbBg || null, cellFontColor, !!isCustomDark, 10, c === 0 ? 'left' : 'center', 'middle', thinBorder);
-                        ws.getCell(rowIdx, colSpans[c][1]).border = thinBorder;
+                        let cell = row[c] || { text: '', bg: '' };
+                        let hexBg = getHexFromRgb(cell.bg);
+                        let isDark = hexBg && hexBg.toUpperCase() !== '#FFFFFF';
+                        let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
+                        rowCells.push({ text: cell.text, alignment: c === 0 ? 'left' : 'center', margin: [1, 2, 1, 2], fillColor: hexBg || null, color: fontColor, bold: isDark });
                     }
-                    rowIdx++;
+                    castBody.push(rowCells);
+                });
+                docDefinition.content.push({
+                    table: { headerRows: 1, dontBreakRows: true, widths: ['*', '*', '*', '*'], body: castBody },
+                    layout: {
+                        hLineWidth: function(i, node) { return 0.5; }, vLineWidth: function(i, node) { return 0.5; },
+                        hLineColor: function(i, node) { return '#BDC3C7'; }, vLineColor: function(i, node) { return '#BDC3C7'; },
+                        fillColor: function (rowIndex, node, columnIndex) { return (rowIndex === 0) ? '#F2F4F4' : '#FFFFFF'; }
+                    },
+                    margin: [0, 0, 0, 5]
                 });
             }
-            rowIdx++;
-            
+
             const notesSection = document.querySelector('.notes-section');
-            if (notesSection && notesSection.nextElementSibling) {
-                ws.mergeCells(`A${rowIdx}:G${rowIdx}`);
-                ws.getCell(`A${rowIdx}`).value = "POZNÁMKY PRE ŠTÁB\n" + notesSection.nextElementSibling.innerText.trim();
-                styleCell(ws.getCell(`A${rowIdx}`), null, TEXT_COLOR, false, 10, 'left', 'top', thinBorder);
-                for(let c=1; c<=7; c++) ws.getCell(rowIdx, c).border = thinBorder;
-                ws.getRow(rowIdx).height = 60;
-                rowIdx++;
-            } else {
-                rowIdx++;
+            const notesField = document.getElementById('notes-field');
+            if (notesSection && notesField) {
+                const notesText = notesField.innerText.trim();
+                const isExample = notesField.classList.contains('example-text');
+                
+                if (notesText && !isExample) {
+                    docDefinition.content.push({
+                        table: { widths: ['*'], body: [
+                            [{ text: notesSection.innerText.toUpperCase(), fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
+                            [{ text: notesText, margin: [2, 2, 2, 2], fillColor: '#FFFFFF', color: '#2c3e50', border: [true, false, true, true] }]
+                        ]},
+                        layout: blockLayout,
+                        margin: [0, 0, 0, 5]
+                    });
+                }
             }
 
-            ws.mergeCells(`A${rowIdx}:G${rowIdx}`);
-            ws.getCell(`A${rowIdx}`).value = {
-                richText: [
-                    { font: { name: 'Arial', size: 8, color: { argb: 'FF000000' } }, text: 'copyright© barameter.sk' }
-                ]
-            };
-            ws.getCell(`A${rowIdx}`).alignment = { horizontal: 'right', vertical: 'middle' };
-            ws.getRow(rowIdx).height = 25;
-
-            const fileName = 'Dispozícia_' + (dateFieldText || 'nepomenovana').replace(/[^0-9a-zA-Z]/g, '_') + '.xlsx';
-            const buffer = await wb.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, fileName);
-            btn.innerText = '📊 EXPORT EXCEL';
+            const fileName = 'Dispozícia_' + (dateFieldText || 'nepomenovana').replace(/[^0-9a-zA-Z]/g, '_') + '.pdf';
+            return { docDefinition, fileName };
         }
 
-function exportPDF() {
-            const btn = document.querySelector('.btn-primary');
+        function exportPDF() {
+            const btn = document.getElementById('export-btn');
+            const originalText = btn.innerText;
             btn.innerText = '⚙️ PRIPRAVUJEM...';
 
             try {
-                const proj = getVal('Názov projektu') || 'PROJEKT';
-                const dateFieldText = document.getElementById('date-field') ? document.getElementById('date-field').innerText : 'DÁTUM';
-                const day = getVal('Filmovací deň') || '';
-
-                let extraProjInfo = [];
-                const projCells = document.getElementById('project-section') ? document.getElementById('project-section').querySelectorAll('.layout-cell') : [];
-                projCells.forEach(cell => {
-                    const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
-                    const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
-                    if (!lbl.toLowerCase().includes('názov projektu') && !lbl.toLowerCase().includes('filmovací deň') && val) {
-                        extraProjInfo.push(val);
-                    }
-                });
-                const extraProjStr = extraProjInfo.length > 0 ? '  |  ' + extraProjInfo.join('  |  ') : '';
-
-                let crewStr = [];
-                const crewSecPdf = document.getElementById('crew-section');
-                if (crewSecPdf && !crewSecPdf.classList.contains('ignored-in-export')) {
-                    crewSecPdf.querySelectorAll('.layout-cell').forEach(cell => {
-                        const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
-                        const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
-                        if (lbl && val) crewStr.push(`${lbl}: ${val}`);
-                    });
-                }
-
-                let transStr = [];
-                const transSecPdf = document.getElementById('transport-section');
-                if (transSecPdf && !transSecPdf.classList.contains('ignored-in-export')) {
-                    transSecPdf.querySelectorAll('.layout-cell').forEach(cell => {
-                        const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
-                        const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
-                        if (lbl && val) transStr.push(`${lbl}: ${val}`);
-                    });
-                }
-
-                let prodInfo = [];
-                const prodCells = document.getElementById('production-section') ? document.getElementById('production-section').querySelectorAll('.layout-cell') : [];
-                prodCells.forEach(cell => {
-                    const lbl = cell.querySelector('.editable-label') ? cell.querySelector('.editable-label').innerText.trim() : '';
-                    const ed = cell.querySelector('.editable'); const val = (ed && !ed.classList.contains('example-text')) ? ed.innerText.trim() : '';
-                    if (lbl && val) {
-                        if (prodInfo.length > 0) prodInfo.push({ text: '\n' });
-                        prodInfo.push({ text: `${lbl}: `, bold: true, fontSize: 9 });
-                        prodInfo.push({ text: val, bold: false, fontSize: 7.5 });
-                    }
-                });
-
-                const weatherSvgs = {
-                    '☀️': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="#f1c40f" stroke="#2c3e50" stroke-width="0.5"/><path d="M12 5v2M12 17v2M5 12h2M17 12h2M7.05 7.05l1.41 1.41M15.54 15.54l1.41 1.41M16.95 7.05l-1.41 1.41M8.46 15.54l-1.41 1.41" stroke="#d35400" stroke-width="0.65" stroke-linecap="round"/></svg>',
-                    '⛅': '<svg viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.5" fill="#f1c40f" stroke="#2c3e50" stroke-width="0.5"/><path d="M15 3.5v1.2M18.5 8h1.2M17.47 5.53l.85-.85M12.53 5.53l-.85-.85M17.47 10.47l.85.85" stroke="#d35400" stroke-width="0.6" stroke-linecap="round"/><path d="M15 13c0-2.21-1.79-4-4-4-1.1 0-2.1.43-2.83 1.13A3.5 3.5 0 0 0 3 13.5C3 15.43 4.57 17 6.5 17H15c.82 0 1.5-.68 1.5-1.5 0-.28-.08-.54-.23-.77z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/></svg>',
-                    '☁️': '<svg viewBox="-2 -2 28 28"><path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/></svg>',
-                    '🌫️': '<svg viewBox="0 0 24 24"><path d="M3 9h18M3 13h18M5 17h14" stroke="#7f8c8d" stroke-width="0.75" stroke-linecap="round"/></svg>',
-                    '🌧️': '<svg viewBox="0 0 24 24"><path d="M16 11c0-2.21-1.79-4-4-4-1.1 0-2.1.43-2.83 1.13A3.5 3.5 0 0 0 4 11.5C4 13.43 5.57 15 7.5 15H16c.82 0 1.5-.68 1.5-1.5 0-.28-.08-.54-.23-.77z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/><path d="M7 17v3m4-3v3m4-3v3" stroke="#2980b9" stroke-width="0.65" stroke-linecap="round"/></svg>',
-                    '❄️': '<svg viewBox="0 0 24 24"><path d="M12 2v20m10-10H2m17.07-7.07l-14.14 14.14m14.14 0L4.93 4.93" stroke="#2980b9" stroke-width="0.65" stroke-linecap="round"/></svg>',
-                    '🌦️': '<svg viewBox="0 0 24 24"><circle cx="15" cy="8" r="3.5" fill="#f1c40f" stroke="#2c3e50" stroke-width="0.5"/><path d="M15 3.5v1.2M18.5 8h1.2M17.47 5.53l.85-.85M12.53 5.53l-.85-.85M17.47 10.47l.85.85" stroke="#d35400" stroke-width="0.6" stroke-linecap="round"/><path d="M15 13c0-2.21-1.79-4-4-4-1.1 0-2.1.43-2.83 1.13A3.5 3.5 0 0 0 3 13.5C3 15.43 4.57 17 6.5 17H15c.82 0 1.5-.68 1.5-1.5 0-.28-.08-.54-.23-.77z" fill="#ecf0f1" stroke="#2c3e50" stroke-width="0.5"/><path d="M7 19v2m4-2v2m4-2v2" stroke="#2980b9" stroke-width="0.65" stroke-linecap="round"/></svg>',
-                    '⛈️': '<svg viewBox="-2 -2 28 28"><path d="M19.36 8.04C18.67 4.59 15.64 2 12 2 9.11 2 6.6 3.64 5.35 6.04 2.34 6.36 0 8.91 0 12c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" fill="#7f8c8d" stroke="#2c3e50" stroke-width="0.5"/><path d="M11 13l-2.5 3.5h3l-2.5 3.5" fill="none" stroke="#f1c40f" stroke-width="0.65" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                    '🌡️': '<svg viewBox="0 0 24 24"><path d="M14 12.76V4a2 2 0 0 0-4 0v8.76a3.5 3.5 0 1 0 4 0z" fill="#ecf0f1" stroke="#c0392b" stroke-width="0.6"/><circle cx="12" cy="16.5" r="2" fill="#c0392b"/><path d="M12 13V8" stroke="#c0392b" stroke-width="0.6" stroke-linecap="round"/></svg>'
-                };
-
-                let wfPdf = document.getElementById('weather-field');
-                let rawWeather = wfPdf ? wfPdf.innerText : '';
-                if (rawWeather.includes('automaticky')) rawWeather = '';
-                let matchedEmoji = Object.keys(weatherSvgs).find(emoji => rawWeather.includes(emoji));
-                let cleanWeather = rawWeather.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{FE0F}]/gu, '').trim();
-                
-                const tC = getThemeColors();
-                const weatherTitlePdf = document.getElementById('weather-label') ? document.getElementById('weather-label').innerText.toUpperCase() : 'POČASIE';
-                
-                let weatherCell = { fillColor: tC.light, margin: [2, 4, 2, 4], border: [true, false, true, true] };
-                let textLines = cleanWeather.split('|').map(p => p.trim()).join('\n');
-                
-                if (matchedEmoji && weatherSvgs[matchedEmoji]) {
-                    weatherCell.columns = [
-                        { width: '45%', stack: [{ svg: weatherSvgs[matchedEmoji], width: 42, alignment: 'right' }], margin: [0, -2, 6, 0] },
-                        { width: '55%', text: textLines, alignment: 'left', bold: true, fontSize: 9, margin: [0, 1, 0, 0] }
-                    ];
-                } else {
-                    weatherCell.stack = [{ text: textLines, alignment: 'center', bold: true, fontSize: 9, margin: [0, 2, 0, 0] }];
-                }
-
-                const tableLayout = {
-                    hLineWidth: function(i, node) { return 0.5; },
-                    vLineWidth: function(i, node) { return 0.5; },
-                    hLineColor: function(i, node) { return '#BDC3C7'; },
-                    vLineColor: function(i, node) { return '#BDC3C7'; },
-                    fillColor: function (rowIndex, node, columnIndex) {
-                        if (rowIndex === 0) return tC.accent; 
-                        return (rowIndex % 2 === 0) ? '#F2F4F4' : '#FFFFFF'; 
-                    }
-                };
-
-                const blockLayout = {
-                    hLineWidth: function(i, node) { return 0.5; },
-                    vLineWidth: function(i, node) { return 0.5; },
-                    hLineColor: function(i, node) { return '#BDC3C7'; },
-                    vLineColor: function(i, node) { return '#BDC3C7'; }
-                };
-
-                const docDefinition = {
-                    pageSize: 'A4',
-                    pageOrientation: 'portrait',
-                    pageMargins: [10, 10, 10, 20],
-                    footer: function(currentPage, pageCount) {
-                        return {
-                            columns: [
-                                { text: '', width: '30%' },
-                                { text: currentPage < pageCount ? '... pokračovanie na ďalšej strane ...' : '', color: '#e74c3c', alignment: 'center', fontSize: 7, width: '40%', italics: true },
-                                { text: 'copyright© barameter.sk', color: '#000000', alignment: 'right', fontSize: 7, width: '30%' }
-                            ],
-                            margin: [10, 5, 10, 0]
-                        };
-                    },
-                    defaultStyle: { font: 'Roboto', fontSize: 7.5, color: '#2c3e50' },
-                    content: [
-                        { 
-                        table: { widths: ['*'], body: [
-                            [{ text: `DENNÁ DISPOZÍCIA  |  ${dateFieldText.toUpperCase()}`, fontSize: 12, bold: true, color: '#111827', alignment: 'center', fillColor: tC.light, margin: [0, 4, 0, 2], border: [true, true, true, false] }],
-                            [{ text: `${proj.toUpperCase()}  |  ${day}. natáčací deň${extraProjStr}`, fontSize: 8.5, bold: true, color: '#111827', alignment: 'center', fillColor: tC.light, margin: [0, 2, 0, 4], border: [true, false, true, true] }]
-                        ]},
-                        layout: {
-                            hLineWidth: function(i, node) { return 0.5; },
-                            vLineWidth: function(i, node) { return 0.5; },
-                            hLineColor: function(i, node) { return '#BDC3C7'; },
-                            vLineColor: function(i, node) { return '#BDC3C7'; }
-                        },
-                        margin: [0, 0, 0, 5]
-                    },
-                        {
-                            table: {
-                                widths: ['32%', '2%', '32%', '2%', '32%'],
-                                body: [
-                                    [
-                                        { text: 'PRODUKCIA', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] },
-                                        { text: '', border: [false, false, false, false] },
-                                        { text: weatherTitlePdf, fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] },
-                                        { text: '', border: [false, false, false, false] },
-                                        { text: 'LOKÁCIE', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }
-                                    ],
-                                    [
-                                        { text: prodInfo, fillColor: '#F2F4F4', margin: [2, 4, 2, 4], border: [true, false, true, true], lineHeight: 1.2 },
-                                        { text: '', border: [false, false, false, false] },
-                                        weatherCell,
-                                        { text: '', border: [false, false, false, false] },
-                                        { text: [
-                                            ...(getVal('Hlavná Lokácia') ? [{ text: 'Hlavná lokácia: ', bold: true, fontSize: 9 }, { text: `${getVal('Hlavná Lokácia').replace(/\n/g, ', ')}\n`, bold: false, fontSize: 7.5 }] : []),
-                                            ...(getVal('Zázemie') ? [{ text: 'Zázemie: ', bold: true, fontSize: 9 }, { text: `${getVal('Zázemie')}\n`, bold: false, fontSize: 7.5 }] : []),
-                                            ...(getVal('Parkovanie') ? [{ text: 'Parkovanie: ', bold: true, fontSize: 9 }, { text: getVal('Parkovanie'), bold: false, fontSize: 7.5 }] : [])
-                                        ], fillColor: '#F2F4F4', margin: [2, 4, 2, 4], border: [true, false, true, true], lineHeight: 1.2 }
-                                    ]
-                                ]
-                            },
-                            layout: blockLayout,
-                            margin: [0, 0, 0, 5]
-                        }
-                    ]
-                };
-
-                const noticeCells = document.getElementById('notices-section') ? document.getElementById('notices-section').querySelectorAll('.layout-cell') : [];
-                noticeCells.forEach(cell => {
-                    const lblEl = cell.querySelector('.editable-label');
-                    const valEl = cell.querySelector('.editable');
-                    let lbl = lblEl ? lblEl.innerText.trim() : '';
-                    let val = (valEl && !valEl.classList.contains('example-text')) ? valEl.innerText.trim() : '';
-                    
-                    if (lbl.toUpperCase() === 'NOVÁ POLOŽKA') lbl = '';
-                    
-                    if (!lbl && !val) return;
-
-                    const hexLblColor = getHexFromRgb(lblEl ? lblEl.style.backgroundColor : '') || tC.accent;
-                    const hexValColor = getHexFromRgb(valEl ? valEl.style.backgroundColor : '');
-                    
-                    const blockBody = [];
-                    if (lbl && val) {
-                        blockBody.push([{ text: lbl.toUpperCase(), fontSize: 8, bold: true, color: '#111827', alignment: 'center', fillColor: hexLblColor, margin: [0, 2, 0, 2], border: [true, true, true, false] }]);
-                        const fontColor = (hexValColor && hexValColor.toUpperCase() === '#333333') ? 'white' : (hexValColor ? '#111827' : '#2c3e50');
-                        const bgColor = hexValColor || '#F2F4F4';
-                        blockBody.push([{ text: val, fontSize: 8, bold: !!hexValColor, color: fontColor, alignment: 'center', fillColor: bgColor, margin: [0, 2, 0, 2], border: [true, false, true, true] }]);
-                    } else if (lbl) {
-                        blockBody.push([{ text: lbl.toUpperCase(), fontSize: 8, bold: true, color: '#111827', alignment: 'center', fillColor: hexLblColor, margin: [0, 2, 0, 2], border: [true, true, true, true] }]);
-                    } else if (val) {
-                        const fontColor = (hexValColor && hexValColor.toUpperCase() === '#333333') ? 'white' : (hexValColor ? '#111827' : '#2c3e50');
-                        const bgColor = hexValColor || '#F2F4F4';
-                        blockBody.push([{ text: val, fontSize: 8, bold: !!hexValColor, color: fontColor, alignment: 'center', fillColor: bgColor, margin: [0, 2, 0, 2], border: [true, true, true, true] }]);
-                    }
-                    
-                    docDefinition.content.push({ table: { widths: ['*'], body: blockBody }, layout: blockLayout, margin: [0, 0, 0, 5] });
-                });
-
-                if (crewStr.length > 0) {
-                    docDefinition.content.push({
-                        table: { widths: ['*'], body: [
-                            [{ text: 'NÁSTUPY NA PĽAC', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
-                            [{ text: crewStr.join('  |  '), fillColor: '#F2F4F4', alignment: 'center', margin: [0, 2, 0, 2], border: [true, false, true, true] }]
-                        ]},
-                        layout: blockLayout, margin: [0, 0, 0, 5]
-                    });
-                }
-
-                if (transStr.length > 0) {
-                    docDefinition.content.push({
-                        table: { widths: ['*'], body: [
-                            [{ text: 'TRANSPORT', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
-                            [{ text: transStr.join('  |  '), fillColor: '#F2F4F4', alignment: 'center', margin: [0, 2, 0, 2], border: [true, false, true, true] }]
-                        ]},
-                        layout: blockLayout, margin: [0, 0, 0, 5]
-                    });
-                }
-
-                const scenes = getTableData('scény');
-                if (scenes.length > 0) {
-                    const sceneBody = [];
-                    sceneBody.push([
-                        { text: 'ČAS', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                        { text: 'OBRAZ', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                        { text: 'LOKÁCIA', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                        { text: 'POPIS AKCIE', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                        { text: 'ÚČINKUJÚCI', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                        { text: 'REKVIZITY', color: '#111827', bold: true, alignment: 'center', margin:[0,1,0,1] }
-                    ]);
-                    scenes.forEach(row => {
-                        const isLunch = row.isLunch;
-                        
-                        // Kalkulacka na orezanie Popisu akcie pre PDF
-                        if (!isLunch && row[3] && row[4] && row[5]) {
-                            let castL = row[4].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 30)), 0);
-                            let propsL = row[5].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 35)), 0);
-                            let actL = row[3].text.split('\n').reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 32)), 0);
-                            
-                            if (propsL > 2) {
-                                row[5].text = row[5].text.replace(/\n/g, ' ').substring(0, 45).trim() + "... (viz scenár)";
-                                propsL = 2;
-                            }
-
-                            if (castL < 3 && propsL < 3 && actL > 2) {
-                                row[3].text = row[3].text.replace(/\n/g, ' ').substring(0, 62).trim() + "...";
-                            }
-                        }
-
-                        const rowCells = [];
-                        for(let c=0; c<6; c++) {
-                            let cell = row[c] || { text: '', bg: '' };
-                            let hexBg = getHexFromRgb(cell.bg);
-                            let isDark = hexBg && hexBg.toUpperCase() !== '#F9E79F' && hexBg.toUpperCase() !== '#FFFFFF';
-                            let cellBg = hexBg || (isLunch ? '#F9E79F' : null);
-                            let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
-                            let alignH = (c === 1) ? 'center' : 'left';
-                            rowCells.push({ text: cell.text, alignment: alignH, margin: [1, 2, 1, 2], fillColor: cellBg, color: fontColor, bold: isLunch || isDark, noWrap: c === 0 });
-                        }
-                        sceneBody.push(rowCells);
-                    });
-                    docDefinition.content.push({
-                        table: { headerRows: 1, dontBreakRows: true, widths: ['auto', 'auto', '20%', '24%', '*', '*'], body: sceneBody },
-                        layout: tableLayout, margin: [0, 0, 0, 5]
-                    });
-                }
-
-                const casts = getTableData('herci');
-                if (casts.length > 0) {
-                    docDefinition.content.push({
-                        table: { widths: ['*'], body: [[{ text: 'HERCI / CAST', fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [false, false, false, false] }]] },
-                        layout: 'noBorders'
-                    });
-                    const castBody = [];
-                    castBody.push([
-                    { text: 'ÚČINKUJÚCI', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                    { text: 'ODCHOD (PICK UP)', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                    { text: 'KOSTÝMY / MASKY', bold: true, alignment: 'center', margin:[0,1,0,1] },
-                    { text: 'NA PĽACI (ON SET)', bold: true, alignment: 'center', margin:[0,1,0,1] }
-                ]);
-                    casts.forEach(row => {
-                        const rowCells = [];
-                        for(let c=0; c<4; c++) {
-                            let cell = row[c] || { text: '', bg: '' };
-                            let hexBg = getHexFromRgb(cell.bg);
-                            let isDark = hexBg && hexBg.toUpperCase() !== '#FFFFFF';
-                            let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
-                            rowCells.push({ text: cell.text, alignment: c === 0 ? 'left' : 'center', margin: [1, 2, 1, 2], fillColor: hexBg || null, color: fontColor, bold: isDark });
-                        }
-                        castBody.push(rowCells);
-                    });
-                    docDefinition.content.push({
-                        table: { headerRows: 1, dontBreakRows: true, widths: ['*', '*', '*', '*'], body: castBody },
-                        layout: {
-                            hLineWidth: function(i, node) { return 0.5; }, vLineWidth: function(i, node) { return 0.5; },
-                            hLineColor: function(i, node) { return '#BDC3C7'; }, vLineColor: function(i, node) { return '#BDC3C7'; },
-                            fillColor: function (rowIndex, node, columnIndex) { return (rowIndex === 0) ? '#F2F4F4' : '#FFFFFF'; }
-                        },
-                        margin: [0, 0, 0, 5]
-                    });
-                }
-
-                const notesSection = document.querySelector('.notes-section');
-                const notesField = document.getElementById('notes-field');
-                if (notesSection && notesField) {
-                    const notesText = notesField.innerText.trim();
-                    const isExample = notesField.classList.contains('example-text');
-                    
-                    if (notesText && !isExample) {
-                        docDefinition.content.push({
-                            table: { widths: ['*'], body: [
-                                [{ text: notesSection.innerText.toUpperCase(), fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
-                                [{ text: notesText, margin: [2, 2, 2, 2], fillColor: '#FFFFFF', color: '#2c3e50', border: [true, false, true, true] }]
-                            ]},
-                            layout: blockLayout,
-                            margin: [0, 0, 0, 5]
-                        });
-                    }
-                }
-
-                const fileName = 'Dispozícia_' + (dateFieldText || 'nepomenovana').replace(/[^0-9a-zA-Z]/g, '_') + '.pdf';
+                const { docDefinition, fileName } = buildPdfDefinition();
                 pdfMake.createPdf(docDefinition).download(fileName);
-                btn.innerText = '📄 EXPORT PDF';
+                btn.innerText = originalText;
             } catch (err) {
                 console.error(err);
                 alert('Chyba pri generovaní PDF: ' + err.message);
-                btn.innerText = '📄 EXPORT PDF';
+                btn.innerText = originalText;
             }
+        }
+
+        function previewPDF() {
+            const btn = document.getElementById('preview-btn');
+            const originalText = btn.innerText;
+            btn.innerText = '⚙️ PRIPRAVUJEM...';
+
+            try {
+                const { docDefinition } = buildPdfDefinition();
+                const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+                
+                pdfDocGenerator.getDataUrl((dataUrl) => {
+                    const iframe = document.getElementById('preview-iframe');
+                    iframe.src = dataUrl;
+                    document.getElementById('preview-modal').classList.add('show');
+                    btn.innerText = originalText;
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Chyba pri generovaní náhľadu: ' + err.message);
+                btn.innerText = originalText;
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('preview-iframe').src = '';
+            }, 300);
         }
 
         document.addEventListener('change', async function(e) {
