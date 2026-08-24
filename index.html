@@ -802,22 +802,27 @@
             padding-top: 4px;
         }
 
+        #preview-modal .modal-content {
+            max-width: 800px;
+            width: 95%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
         .preview-container {
+            flex: 1 1 auto;
+            min-height: 0;
             width: 100%;
-            height: calc(100vh - 140px);
             border: 1px solid var(--color-border);
             border-radius: 6px;
             background-color: #cbd5e1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 15px;
             box-sizing: border-box;
             text-align: center;
-        }
-        
-        #preview-modal .modal-content {
-            max-width: 900px;
-            width: 95%;
-            height: 95vh;
         }
     </style>
 </head>
@@ -1142,8 +1147,8 @@
         </div>
     </div>
 
-    <div id="preview-modal" class="modal-overlay">
-        <div class="modal-content">
+    <div id="preview-modal" class="modal-overlay" style="cursor: pointer;" onclick="if(event.target === this) closePreview();">
+        <div class="modal-content" style="cursor: default;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div class="modal-title">Náhľad PDF</div>
                 <button class="btn-modal btn-cancel" onclick="closePreview()" style="padding: 6px 12px;">Zavrieť</button>
@@ -1939,8 +1944,13 @@
                 return;
             }
 
-            if (document.getElementById('edit-modal').classList.contains('show')) {
-                if (e.target.classList.contains('modal-overlay')) closeModal();
+            if (document.getElementById('edit-modal').classList.contains('show') && e.target.classList.contains('modal-overlay')) {
+                closeModal();
+                return;
+            }
+
+            if (document.getElementById('preview-modal') && document.getElementById('preview-modal').classList.contains('show') && e.target.classList.contains('modal-overlay')) {
+                closePreview();
                 return;
             }
 
@@ -2777,6 +2787,17 @@ function buildPdfDefinition() {
                 e.target.value = '';
             }
         });
+
+function closePreview() {
+            const modal = document.getElementById('preview-modal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    const container = document.getElementById('preview-container');
+                    if (container) container.innerHTML = '';
+                }, 300);
+            }
+        }
 
 function syncCastTableWithScenes() {
             const savedScript = localStorage.getItem('savedScriptText');
