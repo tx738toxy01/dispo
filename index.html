@@ -841,9 +841,38 @@
         }
 
         body.modal-open {
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
+            background-color: #cbd5e1 !important;
+        }
+
+        body.modal-open > .top-controls,
+        body.modal-open > .document-container {
+            display: none !important;
+        }
+
+        body.modal-open #preview-modal {
+            position: static !important;
+            display: block !important;
+            background: none !important;
+            backdrop-filter: none !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body.modal-open #preview-modal .modal-content {
+            max-width: 100% !important;
+            width: 100% !important;
+            max-height: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            pointer-events: auto !important;
+        }
+
+        body.modal-open .preview-container {
+            border: none !important;
+            background: transparent !important;
+            padding: 15px 0 0 0 !important;
+            overflow: visible !important;
         }
     </style>
 </head>
