@@ -1704,7 +1704,7 @@
                 elementToFocus = document.getElementById('modal-textarea');
             }
 
-            const isNoColorSection = el.closest('#header-section') || el.closest('#management-section') || el.closest('#locations-section') || el.closest('#weather-box') || el.closest('#logistics-section-wrapper');
+            const isNoColorSection = el.closest('#header-section') || el.closest('#management-section') || el.closest('#locations-section') || el.closest('#weather-box') || el.closest('#logistics-section-wrapper') || el.classList.contains('section-title') || el.closest('.lunch-row');
             const cp = document.getElementById('modal-color-picker');
             if(cp) cp.style.display = isNoColorSection ? 'none' : 'flex';
             
@@ -2677,10 +2677,15 @@ function buildPdfDefinition() {
                 const isExample = notesField.classList.contains('example-text');
                 
                 if (notesText && !isExample) {
+                    let hexBg = getHexFromRgb(notesField.style.backgroundColor);
+                    let isDark = hexBg && hexBg.toUpperCase() !== '#FFFFFF';
+                    let cellBg = hexBg || '#FFFFFF';
+                    let fontColor = (hexBg && hexBg.toUpperCase() === '#333333') ? 'white' : (isDark ? '#111827' : '#2c3e50');
+
                     docDefinition.content.push({
                         table: { widths: ['*'], body: [
                             [{ text: notesSection.innerText.toUpperCase(), fillColor: tC.accent, color: '#111827', bold: true, alignment: 'center', margin: [0, 1, 0, 1], border: [true, true, true, false] }],
-                            [{ text: notesText, margin: [2, 2, 2, 2], fillColor: '#FFFFFF', color: '#2c3e50', border: [true, false, true, true] }]
+                            [{ text: notesText, margin: [2, 2, 2, 2], fillColor: cellBg, color: fontColor, bold: isDark, border: [true, false, true, true] }]
                         ]},
                         layout: blockLayout,
                         margin: [0, 0, 0, 5]
