@@ -179,6 +179,14 @@
             position: relative;
         }
 
+        table.layout-table td.layout-cell:last-child {
+            padding-right: 0;
+        }
+
+        table.layout-table td.layout-cell:last-child .delete-btn {
+            right: 0;
+        }
+
         .editable-label {
             font-size: var(--font-size-small);
             font-weight: bold;
@@ -329,7 +337,7 @@
         .delete-btn {
             position: absolute;
             top: 2px;
-            right: 4px;
+            right: 16px;
             background-color: #e74c3c;
             color: white;
             border: none;
@@ -823,9 +831,11 @@
             display: block;
             width: 100%;
             box-sizing: border-box;
-            padding: 0;
-            padding-top: 4px;
-            padding-left: 9px;
+            padding: 4px 0 0 9px;
+        }
+
+        .top-panels-wrapper .delete-btn {
+            right: 0;
         }
 
         #preview-modal .modal-content {
