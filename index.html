@@ -172,7 +172,7 @@
         }
 
         table.layout-table td.layout-cell {
-            padding: 0 4px;
+            padding: 0 16px 0 9px;
             border: none;
             background: transparent;
             vertical-align: top;
@@ -328,7 +328,7 @@
 
         .delete-btn {
             position: absolute;
-            top: -4px;
+            top: 2px;
             right: 4px;
             background-color: #e74c3c;
             color: white;
@@ -376,13 +376,14 @@
 
         .drag-col-handle {
             position: absolute;
-            top: -4px;
-            right: 24px;
-            background-color: #95a5a6;
+            top: 18px;
+            bottom: 0;
+            left: -11px;
+            right: auto;
+            background-color: transparent;
             color: transparent;
-            border-radius: 50%;
             width: 16px;
-            height: 16px;
+            height: auto;
             font-size: 0;
             font-weight: bold;
             cursor: grab;
@@ -393,12 +394,15 @@
         }
         .drag-col-handle::after {
             content: "☰";
-            color: white;
-            font-size: 10px;
+            color: #bdc3c7;
+            font-size: 20px;
         }
         
         .drag-col-handle:hover {
-            background-color: #7f8c8d;
+            background-color: transparent;
+        }
+        .drag-col-handle:hover::after {
+            color: #7f8c8d;
         }
 
         .drag-col-handle:active {
@@ -583,6 +587,7 @@
             .top-panels-wrapper > div {
                 margin-bottom: 20px !important;
                 width: 100% !important;
+                box-sizing: border-box !important;
             }
             .btn-action {
                 font-size: 10px;
@@ -608,10 +613,12 @@
             }
             table.layout-table td.layout-cell {
                 padding-top: 4px !important;
+                padding-left: 8px !important;
                 margin-bottom: 6px !important;
             }
             table.layout-table td.layout-cell .editable-label {
-                padding-right: 60px !important;
+                padding-left: 0 !important;
+                padding-right: 30px !important;
             }
             table.layout-table td.layout-cell .delete-btn {
                 top: -2px !important;
@@ -621,13 +628,18 @@
                 font-size: 12px !important;
             }
             .drag-col-handle {
-                top: -2px !important;
-                right: 28px !important;
-                width: 22px !important;
-                height: 22px !important;
+                top: 18px !important;
+                bottom: 6px !important;
+                transform: none !important;
+                left: -11px !important;
+                right: auto !important;
+                width: 16px !important;
+                height: auto !important;
+                background-color: transparent !important;
             }
             .drag-col-handle::after {
-                font-size: 12px !important;
+                font-size: 20px !important;
+                color: #bdc3c7 !important;
             }
 
             table.data-table, table.data-table tbody {
@@ -813,6 +825,7 @@
             box-sizing: border-box;
             padding: 0;
             padding-top: 4px;
+            padding-left: 9px;
         }
 
         #preview-modal .modal-content {
@@ -958,7 +971,7 @@
                     <table class="layout-table">
                         <tbody>
                             <tr>
-                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Hlavná Lokácia (Adresa)</div><div class="editable" id="location-field" data-type="location">Ulica, Mesto...</div></td>
+                                <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Hlavná Lokácia</div><div class="editable" id="location-field" data-type="location">Ulica, Mesto...</div></td>
                                 <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Zázemie (Basecamp)</div><div class="editable">Kultúrny dom...</div></td>
                                 <td class="layout-cell" draggable="true"><span class="drag-col-handle" title="Presunúť">☰</span><button class="delete-btn">&times;</button><div class="editable-label">Parkovanie</div><div class="editable">Detaily o parkovaní pre štáb</div></td>
                             </tr>
