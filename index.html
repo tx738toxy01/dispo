@@ -3045,13 +3045,29 @@ function syncCastTableWithScenes() {
                     let propsMatch = line.match(/\(?rekvizity:\s*(.*?)(?:\)|$)/i);
                     if (propsMatch) {
                         currentSceneObj.props = propsMatch[1].trim();
+                        if (!line.includes(')')) state = "in_props";
                         continue; 
                     }
 
                     let costumesMatch = line.match(/\(?kostýmy:\s*(.*?)(?:\)|$)/i);
                     if (costumesMatch) {
                         currentSceneObj.costumes = costumesMatch[1].trim();
+                        if (!line.includes(')')) state = "in_costumes";
                         continue; 
+                    }
+
+                    if (state === "in_costumes") {
+                        let cleanLine = line.replace(/\)+$/, '').trim();
+                        currentSceneObj.costumes += " " + cleanLine;
+                        if (line.includes(')')) state = "expecting_action";
+                        continue;
+                    }
+
+                    if (state === "in_props") {
+                        let cleanLine = line.replace(/\)+$/, '').trim();
+                        currentSceneObj.props += " " + cleanLine;
+                        if (line.includes(')')) state = "expecting_action";
+                        continue;
                     }
 
                     if (state === "expecting_cast") {
